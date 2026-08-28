@@ -1,9 +1,11 @@
+package Simulator;
+
 import java.util.ArrayList;
 
 public class GUILane {
     private int ID;
-    private ArrayList<GUILight> myLights;
-    private Sensor mySensor;
+    private ArrayList<GUILight> myLights = new ArrayList<>();
+    private GUISensor mySensor;
 
     public GUILane(int ID) {
         this.ID = ID;
@@ -15,7 +17,7 @@ public class GUILane {
         myLights = new ArrayList<>();
     }
 
-    public void makeSensor(Sensor mySensor) {
+    public void makeSensor(GUISensor mySensor) {
         this.mySensor = mySensor;
     }
     public void updateLights(int LightID, LightCol Color){

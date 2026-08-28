@@ -1,3 +1,5 @@
+package Simulator;
+
 public enum Bearing {
     North,
     South,

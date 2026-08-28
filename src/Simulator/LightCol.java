@@ -1,3 +1,5 @@
+package Simulator;
+
 public enum LightCol {
     Green,
     Yellow,

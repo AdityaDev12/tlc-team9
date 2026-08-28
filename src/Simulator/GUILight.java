@@ -1,3 +1,5 @@
+package Simulator;
+
 public class GUILight {
     private int ID;
     private LightCol Color;

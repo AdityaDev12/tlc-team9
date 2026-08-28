@@ -9,9 +9,14 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import java.util.ArrayList;
+
 
 public class GUIHub{
     private Stage primaryStage;
+    private ArrayList<GUILane> LaneList = new ArrayList<>();
+    private ArrayList<GUICar> CarList = new ArrayList<>();
+
 
     public GUIHub(Stage primaryStage){
         this.primaryStage = primaryStage;
@@ -22,7 +27,8 @@ public class GUIHub{
 
     }
 
-    public void changeLight(int ID, LightCol Color){
-
+    public void changeLight(int LaneID, int, LightID, LightCol Color){
+        GUILane theLane = LaneList.get(LaneID);
+        theLane.
     }
 }

@@ -14,4 +14,12 @@ public class GUILane {
     public void makeLights() {
         myLights = new ArrayList<>();
     }
+
+    public void makeSensor(Sensor mySensor) {
+        this.mySensor = mySensor;
+    }
+    public void updateLights(int LightID, LightCol Color){
+        GUILight theLight = myLights.get(LightID);
+        theLight.changeColor(Color);
+    }
 }

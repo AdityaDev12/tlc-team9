@@ -30,9 +30,14 @@ public class GUIMain{
     //distance from intersection where line begins
     private static final double LINE_LENGTH = 100;
 
+    //stop line
+    private static final double STOPLINE_WIDTH = 15;
+
     //crosswalk
-    private static final double CROSSWALK_WIDTH = 50;
-    private static final double CROSSWALK_GAP = 10;
+    private static final double CROSSWALK_WIDTH = 80;
+    private static final double CROSSWALK_HEIGHT = 25;
+    private static final double CROSSWALK_GAP = 40;
+    private static final double CROSSWALK_OFFSET = 5;
 
     private final ArrayList<GUILane> LaneList = new ArrayList<>();
     private final ArrayList<GUICar> CarList = new ArrayList<>();
@@ -74,7 +79,7 @@ public class GUIMain{
 
         drawStopLines();
 
-        //drawCrosswalkss();
+        drawCrosswalks();
     }
 
     //horizontal road
@@ -227,13 +232,11 @@ public class GUIMain{
         double intersectionTop = (WINDOW_HEIGHT - ROAD_WIDTH) / 2; //top edge
         double intersectionBottom = intersectionTop + ROAD_WIDTH; //bottom edge
 
-        double width = 15;
-
         //west stop line
         Rectangle westStopLine = new Rectangle(
                 intersectionLeft - LINE_LENGTH,
                 intersectionTop + (ROAD_WIDTH / 2),
-                width,
+                STOPLINE_WIDTH,
                 ROAD_WIDTH / 2
         );
 
@@ -241,9 +244,9 @@ public class GUIMain{
 
         //east stop line
         Rectangle eastStopLine = new Rectangle(
-                intersectionRight + LINE_LENGTH - width,
+                intersectionRight + LINE_LENGTH - STOPLINE_WIDTH,
                 intersectionTop,
-                width,
+                STOPLINE_WIDTH,
                 ROAD_WIDTH / 2
         );
 
@@ -254,7 +257,7 @@ public class GUIMain{
                 intersectionLeft,
                 intersectionTop - LINE_LENGTH,
                 ROAD_WIDTH / 2,
-                width
+                STOPLINE_WIDTH
         );
 
         northStopLine.setFill(Color.WHITE);
@@ -262,9 +265,9 @@ public class GUIMain{
         //south stop line
         Rectangle southStopLine = new Rectangle(
                 intersectionLeft + (ROAD_WIDTH / 2),
-                intersectionBottom + LINE_LENGTH - width,
+                intersectionBottom + LINE_LENGTH - STOPLINE_WIDTH,
                 ROAD_WIDTH / 2,
-                width
+                STOPLINE_WIDTH
         );
 
         southStopLine.setFill(Color.WHITE);
@@ -277,7 +280,91 @@ public class GUIMain{
         );
     }
 
+    //draw crosswalks
+    private void drawCrosswalks() {
+        drawWestCrosswalk();
+        drawEastCrosswalk();
+        drawNorthCrosswalk();
+        drawSouthCrosswalk();
+    }
 
+    //west crosswalk
+    private void drawWestCrosswalk() {
+        //left edge of intersection
+        double intersectionLeft = (WINDOW_WIDTH - ROAD_WIDTH) / 2;
+
+        //top edge of intersection
+        double intersectionTop = (WINDOW_HEIGHT - ROAD_WIDTH) / 2;
+
+        //position of crosswalk before the intersection
+        double x = intersectionLeft - LINE_LENGTH + STOPLINE_WIDTH + CROSSWALK_OFFSET;
+
+        //draw horizontal crosswalk stripes
+        for(double y = intersectionTop; y < intersectionTop + ROAD_WIDTH; y+= CROSSWALK_GAP) {
+            Rectangle stripe = new Rectangle(x, y + CROSSWALK_OFFSET, CROSSWALK_WIDTH, CROSSWALK_HEIGHT);
+
+            stripe.setFill(Color.WHITE);
+
+            streetPane.getChildren().add(stripe);
+        }
+    }
+
+    //east crosswalk
+    private void drawEastCrosswalk() {
+        //right edge of intersection
+        double intersectionRight = (WINDOW_WIDTH + ROAD_WIDTH) / 2;
+
+        //top edge of intersection
+        double intersectionTop = (WINDOW_HEIGHT - ROAD_WIDTH) / 2;
+
+        //draw horizontal crosswalk stripes
+        for(double y = intersectionTop; y < intersectionTop + ROAD_WIDTH; y += CROSSWALK_GAP) {
+            Rectangle stripe = new Rectangle(intersectionRight, y + CROSSWALK_OFFSET, CROSSWALK_WIDTH, CROSSWALK_HEIGHT);
+
+            stripe.setFill(Color.WHITE);
+
+            streetPane.getChildren().add(stripe);
+        }
+    }
+
+    //north crosswalk
+    private void drawNorthCrosswalk() {
+        //ledge edge of intersection
+        double intersectionLeft = (WINDOW_WIDTH - ROAD_WIDTH) / 2;
+
+        //top edge of intersection
+        double intersectionTop = (WINDOW_HEIGHT - ROAD_WIDTH) / 2;
+
+        //position of crosswalk before intersection
+        double y = intersectionTop - LINE_LENGTH + STOPLINE_WIDTH + CROSSWALK_OFFSET;
+
+        //draw vertical crosswalk stripes
+        for(double x = intersectionLeft; x < intersectionLeft + ROAD_WIDTH; x += CROSSWALK_GAP) {
+            Rectangle stripe = new Rectangle(x + CROSSWALK_OFFSET, y, CROSSWALK_HEIGHT, CROSSWALK_WIDTH);
+
+            stripe.setFill(Color.WHITE);
+
+            streetPane.getChildren().add(stripe);
+        }
+    }
+
+    //south crosswalk
+    private void drawSouthCrosswalk(){
+        //ledge edge of intersection
+        double intersectionLeft = (WINDOW_WIDTH - ROAD_WIDTH) / 2;
+
+        //position of crosswalk before intersection
+        double y = (WINDOW_HEIGHT + ROAD_WIDTH) / 2;
+
+        //draw vertical crosswalk stripes
+        for(double x = intersectionLeft; x < intersectionLeft + ROAD_WIDTH; x += CROSSWALK_GAP) {
+            Rectangle stripe = new Rectangle(x + CROSSWALK_OFFSET, y, CROSSWALK_HEIGHT, CROSSWALK_WIDTH);
+
+            stripe.setFill(Color.WHITE);
+
+            streetPane.getChildren().add(stripe);
+        }
+    }
 
     public void changeLight(int LaneID, int LightID, LightCol Color){
         GUILane theLane = LaneList.get(LaneID);

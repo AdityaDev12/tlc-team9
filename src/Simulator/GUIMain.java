@@ -4,6 +4,7 @@ import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
@@ -78,6 +79,11 @@ public class GUIMain{
 
     //creates the intersection
     private void createIntersection() {
+        double intersectionLeft = (WINDOW_WIDTH - ROAD_WIDTH) / 2; //left edge
+        double intersectionRight = intersectionLeft + ROAD_WIDTH; //right edge
+        double intersectionTop = (WINDOW_HEIGHT - ROAD_WIDTH) / 2; //top edge
+        double intersectionBottom = intersectionTop + ROAD_WIDTH; //bottom edge
+
         drawRoad(WINDOW_WIDTH, WINDOW_HEIGHT, true);
         drawRoad(WINDOW_HEIGHT, WINDOW_WIDTH, false);
 
@@ -87,6 +93,38 @@ public class GUIMain{
         drawStopLines();
 
         drawCrosswalks();
+
+        //northbound traffic lights
+        for(int lane = 0; lane < LANES_PER_DIRECTION; lane++) {
+            double x = intersectionLeft + (lane * LANE_WIDTH) + (ROAD_WIDTH / 2);
+            double y = intersectionBottom + LINE_LENGTH - (STOPLINE_WIDTH * 3) + CROSSWALK_OFFSET;
+
+            drawTrafficLight(x, y, "north");
+        }
+
+        //southbound traffic lights
+        for(int lane = 0; lane < LANES_PER_DIRECTION; lane++) {
+            double x = intersectionLeft + (lane * LANE_WIDTH);
+            double y = intersectionTop - LINE_LENGTH + STOPLINE_WIDTH;
+
+            drawTrafficLight(x, y, "south");
+        }
+
+        //westbound traffic lights
+        for(int lane = 0; lane < LANES_PER_DIRECTION; lane++) {
+            double x = intersectionRight + LINE_LENGTH - (STOPLINE_WIDTH * 3) + CROSSWALK_OFFSET;
+            double y = intersectionTop + (lane * LANE_WIDTH);
+
+            drawTrafficLight(x, y, "west");
+        }
+
+        //eastbound traffic lights
+        for(int lane = 0; lane < LANES_PER_DIRECTION; lane++) {
+            double x = intersectionLeft - LINE_LENGTH + STOPLINE_WIDTH;
+            double y = intersectionTop + (lane * LANE_WIDTH) + (ROAD_WIDTH / 2);
+
+            drawTrafficLight(x, y, "east");
+        }
     }
 
     //draw road
@@ -368,6 +406,87 @@ public class GUIMain{
 
             streetPane.getChildren().add(stripe);
         }
+    }
+
+
+
+
+    //traffic light
+    private void drawTrafficLight(double x, double y, String direction) {
+        //size of housing
+        double height = 25;
+
+        //gap between the lights and housing
+        double gap = 0.6;
+
+        //light radius
+        double radius = height * 0.4;
+
+        //light circumference
+        double circumference = 2 * radius;
+
+        Rectangle housing;
+
+        Circle redLight;
+        Circle yellowLight;
+        Circle greenLight;
+
+        if(direction.equals("east") || direction.equals("west")) {
+            //housing for lights
+            housing = new Rectangle(x, y, height, LANE_WIDTH);
+
+            //round the corners
+            housing.setArcWidth(housing.getWidth() * 0.8);
+            housing.setArcHeight(housing.getHeight() * 0.3333);
+
+            //traffic lights
+            if(direction.equals("west")) {
+                redLight = new Circle(x + 12.5, y + 10 + (2 * circumference) + gap, radius);
+                greenLight = new Circle(x + 12.5, y + 10 + gap, radius);
+            }
+
+            else {
+                redLight = new Circle(x + 12.5, y + 10 + gap, radius);
+                greenLight = new Circle(x + 12.5, y + 10 + (2 * circumference) + gap, radius);
+            }
+
+            yellowLight = new Circle(x + 12.5, y + 10 + circumference + gap, radius);
+
+            redLight.setFill(Color.RED);
+            yellowLight.setFill(Color.YELLOW);
+            greenLight.setFill(Color.GREEN);
+        }
+
+        else {
+            //housing for lights
+            housing = new Rectangle(x, y, LANE_WIDTH, height);
+
+            //round the corners
+            housing.setArcWidth(housing.getWidth() * 0.3333);
+            housing.setArcHeight(housing.getHeight() * 0.8);
+
+            //traffic lights
+            if(direction.equals("south")) {
+                redLight = new Circle(x + 10 + (2 * circumference) + gap, y + 12.5, radius);
+                greenLight = new Circle(x + 10 + gap, y + 12.5, radius);
+            }
+
+            else {
+                redLight = new Circle(x + 10 + gap, y + 12.5, radius);
+                greenLight = new Circle(x + 10 + (2 * circumference) + gap, y + 12.5, radius);
+            }
+
+            yellowLight = new Circle(x + 10 + circumference + gap, y + 12.5, radius);
+
+            redLight.setFill(Color.RED);
+            yellowLight.setFill(Color.YELLOW);
+            greenLight.setFill(Color.GREEN);
+        }
+
+        housing.setFill(Color.BLACK);
+
+        streetPane.getChildren().addAll(housing, redLight, yellowLight, greenLight);
+
     }
 
     public void changeLight(int LaneID, int LightID, LightCol Color){

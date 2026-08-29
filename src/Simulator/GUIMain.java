@@ -1,9 +1,11 @@
 package Simulator;
 
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 import java.util.ArrayList;
@@ -14,8 +16,8 @@ public class GUIMain{
     private Pane streetPane;
 
     //window dimensions
-    private static final double WINDOW_WIDTH = 1200;
-    private static final double WINDOW_HEIGHT = 700;
+    private final double WINDOW_WIDTH;
+    private final double WINDOW_HEIGHT;
 
     // Distance between dashes
     private static final double DASH_LENGTH = 30;
@@ -23,7 +25,7 @@ public class GUIMain{
 
     //road dimensions
     private static final int LANES_PER_DIRECTION = 3;
-    private static final int LANE_WIDTH = 40;
+    private static final int LANE_WIDTH = 60;
 
     private static final double ROAD_WIDTH = LANES_PER_DIRECTION * 2 * LANE_WIDTH;
 
@@ -45,6 +47,11 @@ public class GUIMain{
 
     public GUIMain(Stage primaryStage){
         this.primaryStage = primaryStage;
+
+        Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
+
+        WINDOW_WIDTH = screenBounds.getWidth();
+        WINDOW_HEIGHT = screenBounds.getHeight();
     }
 
     public void makeGUI() {

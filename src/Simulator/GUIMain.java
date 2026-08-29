@@ -78,8 +78,8 @@ public class GUIMain{
 
     //creates the intersection
     private void createIntersection() {
-        drawHorizontalRoad();
-        drawVerticalRoad();
+        drawRoad(WINDOW_WIDTH, WINDOW_HEIGHT, true);
+        drawRoad(WINDOW_HEIGHT, WINDOW_WIDTH, false);
 
         drawHorizontalLanes();
         drawVerticalLanes();
@@ -89,26 +89,23 @@ public class GUIMain{
         drawCrosswalks();
     }
 
-    //horizontal road
-    private void drawHorizontalRoad() {
-        double y = (WINDOW_HEIGHT - ROAD_WIDTH) / 2;
+    //draw road
+    private void drawRoad(double x, double y, boolean vertical) {
+        double pos = (x - ROAD_WIDTH) / 2;
 
-        Rectangle horizontalRoad = new Rectangle(0, y, WINDOW_WIDTH, ROAD_WIDTH);
+        Rectangle horizontalRoad;
+
+        if(vertical) {
+            horizontalRoad = new Rectangle(pos, 0, ROAD_WIDTH, y);
+        }
+
+        else {
+            horizontalRoad = new Rectangle(0, pos, y, ROAD_WIDTH);
+        }
 
         horizontalRoad.setFill(Color.DARKGRAY);
 
         streetPane.getChildren().add(horizontalRoad);
-    }
-
-    //vertical road
-    private void drawVerticalRoad() {
-        double x = (WINDOW_WIDTH - ROAD_WIDTH) / 2;
-
-        Rectangle verticalRoad = new Rectangle(x, 0, ROAD_WIDTH, WINDOW_HEIGHT);
-
-        verticalRoad.setFill(Color.DARKGRAY);
-
-        streetPane.getChildren().add(verticalRoad);
     }
 
     //draw horizontal lanes

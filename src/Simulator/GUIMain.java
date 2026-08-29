@@ -126,8 +126,8 @@ public class GUIMain{
 
             //center divider
             if(i == LANES_PER_DIRECTION) {
-                drawHorizontalCenterDivider(y, Color.YELLOW, 0, intersectionLeft - LINE_LENGTH);
-                drawHorizontalCenterDivider(y, Color.YELLOW, intersectionRight + LINE_LENGTH, WINDOW_WIDTH);
+                drawHorizontalCenterDivider(y, 0, intersectionLeft - LINE_LENGTH);
+                drawHorizontalCenterDivider(y, intersectionRight + LINE_LENGTH, WINDOW_WIDTH);
 
                 continue;
             }
@@ -163,11 +163,11 @@ public class GUIMain{
 
 
     //solid horizontal line
-    private void drawHorizontalCenterDivider(double y, Color color, double startX, double endX) {
+    private void drawHorizontalCenterDivider(double y, double startX, double endX) {
 
         Rectangle line = new Rectangle(startX, y, endX - startX, 2);
 
-        line.setFill(color);
+        line.setFill(Color.YELLOW);
 
         streetPane.getChildren().add(line);
     }
@@ -186,8 +186,8 @@ public class GUIMain{
 
             //center divider
             if(i == LANES_PER_DIRECTION) {
-                drawVerticalCenterDivider(x, Color.YELLOW, 0, intersectionTop - LINE_LENGTH);
-                drawVerticalCenterDivider(x, Color.YELLOW, intersectionBottom + LINE_LENGTH, WINDOW_HEIGHT);
+                drawVerticalCenterDivider(x, 0, intersectionTop - LINE_LENGTH);
+                drawVerticalCenterDivider(x, intersectionBottom + LINE_LENGTH, WINDOW_HEIGHT);
 
                 continue;
             }
@@ -223,11 +223,11 @@ public class GUIMain{
 
 
     //solid horizontal line
-    private void drawVerticalCenterDivider(double x, Color color, double startY, double endY) {
+    private void drawVerticalCenterDivider(double x, double startY, double endY) {
 
         Rectangle line = new Rectangle(x, startY, 2, endY - startY);
 
-        line.setFill(color);
+        line.setFill(Color.YELLOW);
 
         streetPane.getChildren().add(line);
     }

@@ -8,7 +8,6 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
-
 import java.util.ArrayList;
 
 
@@ -44,6 +43,9 @@ public class GUIMain{
 
     private final ArrayList<GUILane> LaneList = new ArrayList<>();
     private final ArrayList<GUICar> CarList = new ArrayList<>();
+
+    //store traffic light visuals
+    private final ArrayList<TrafficLightVisual> trafficLights = new ArrayList<>();
 
 
     public GUIMain(Stage primaryStage){
@@ -452,9 +454,15 @@ public class GUIMain{
 
             yellowLight = new Circle(x + 12.5, y + 10 + circumference + gap, radius);
 
+            //inactiveColors
+            Color inactiveRed = Color.rgb(80, 20, 20);
+            Color inactiveYellow = Color.rgb(80, 70, 20);
+            Color inactiveGreen = Color.rgb(20, 70, 30);
+
+            //initial colors
             redLight.setFill(Color.RED);
-            yellowLight.setFill(Color.YELLOW);
-            greenLight.setFill(Color.GREEN);
+            yellowLight.setFill(inactiveYellow);
+            greenLight.setFill(inactiveGreen);
         }
 
         else {
@@ -478,19 +486,63 @@ public class GUIMain{
 
             yellowLight = new Circle(x + 10 + circumference + gap, y + 12.5, radius);
 
+            //inactiveColors
+            Color inactiveRed = Color.rgb(80, 20, 20);
+            Color inactiveYellow = Color.rgb(80, 70, 20);
+            Color inactiveGreen = Color.rgb(20, 70, 30);
+
+            //initial colors
             redLight.setFill(Color.RED);
-            yellowLight.setFill(Color.YELLOW);
-            greenLight.setFill(Color.GREEN);
+            yellowLight.setFill(inactiveYellow);
+            greenLight.setFill(inactiveGreen);
         }
 
         housing.setFill(Color.BLACK);
 
         streetPane.getChildren().addAll(housing, redLight, yellowLight, greenLight);
 
+        //store traffic lights to change them later
+        trafficLights.add(new TrafficLightVisual(redLight, yellowLight, greenLight));
+
     }
 
     public void changeLight(int LaneID, int LightID, LightCol Color){
         GUILane theLane = LaneList.get(LaneID);
         theLane.updateLights(LightID, Color);
+    }
+
+    public void changeTrafficLight(int lightID, LightCol color) {
+        //inactiveColors
+        Color inactiveRed = Color.rgb(80, 20, 20);
+        Color inactiveYellow = Color.rgb(80, 70, 20);
+        Color inactiveGreen = Color.rgb(20, 70, 30);
+
+        TrafficLightVisual light = trafficLights.get(lightID);
+
+        //turn off all lights
+        light.redLight.setFill(inactiveRed);
+        light.yellowLight.setFill(inactiveYellow);
+        light.greenLight.setFill(inactiveGreen);
+
+        //turn on requested light
+        switch(color) {
+            case Red:
+                light.redLight.setFill(Color.RED);
+                break;
+
+            case Yellow:
+                light.yellowLight.setFill(Color.YELLOW);
+                break;
+
+            case Green:
+                light.greenLight.setFill(Color.GREEN);
+                break;
+        }
+    }
+
+
+
+    //small private helper class to store traffic lights
+    private record TrafficLightVisual(Circle redLight, Circle yellowLight, Circle greenLight) {
     }
 }

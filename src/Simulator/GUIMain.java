@@ -58,6 +58,8 @@ public class GUIMain{
         root.setCenter(streetPane);
         root.setBackground(new Background(new BackgroundFill(Color.DARKGRAY, null, null)));
 
+        primaryStage.setResizable(false);
+
         primaryStage.setScene(new Scene(root, WINDOW_WIDTH,WINDOW_HEIGHT));
         primaryStage.show();
     }
@@ -70,7 +72,7 @@ public class GUIMain{
         drawHorizontalLanes();
         drawVerticalLanes();
 
-        //drawStopLines();
+        drawStopLines();
 
         //drawCrosswalkss();
     }
@@ -217,6 +219,64 @@ public class GUIMain{
 
         streetPane.getChildren().add(line);
     }
+
+    //stop line
+    private void drawStopLines() {
+        double intersectionLeft = (WINDOW_WIDTH - ROAD_WIDTH) / 2; //left edge
+        double intersectionRight = intersectionLeft + ROAD_WIDTH; //right edge
+        double intersectionTop = (WINDOW_HEIGHT - ROAD_WIDTH) / 2; //top edge
+        double intersectionBottom = intersectionTop + ROAD_WIDTH; //bottom edge
+
+        double width = 15;
+
+        //west stop line
+        Rectangle westStopLine = new Rectangle(
+                intersectionLeft - LINE_LENGTH,
+                intersectionTop + (ROAD_WIDTH / 2),
+                width,
+                ROAD_WIDTH / 2
+        );
+
+        westStopLine.setFill(Color.WHITE);
+
+        //east stop line
+        Rectangle eastStopLine = new Rectangle(
+                intersectionRight + LINE_LENGTH - width,
+                intersectionTop,
+                width,
+                ROAD_WIDTH / 2
+        );
+
+        eastStopLine.setFill(Color.WHITE);
+
+        //north stop line
+        Rectangle northStopLine = new Rectangle(
+                intersectionLeft,
+                intersectionTop - LINE_LENGTH,
+                ROAD_WIDTH / 2,
+                width
+        );
+
+        northStopLine.setFill(Color.WHITE);
+
+        //south stop line
+        Rectangle southStopLine = new Rectangle(
+                intersectionLeft + (ROAD_WIDTH / 2),
+                intersectionBottom + LINE_LENGTH - width,
+                ROAD_WIDTH / 2,
+                width
+        );
+
+        southStopLine.setFill(Color.WHITE);
+
+        streetPane.getChildren().addAll(
+                westStopLine,
+                eastStopLine,
+                northStopLine,
+                southStopLine
+        );
+    }
+
 
 
     public void changeLight(int LaneID, int LightID, LightCol Color){

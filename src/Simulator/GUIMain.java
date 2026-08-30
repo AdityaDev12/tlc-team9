@@ -3,12 +3,14 @@ package Simulator;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
+import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
@@ -164,6 +166,7 @@ public class GUIMain{
 
             drawTrafficLight(x, y, "east");
         }
+        drawArrowMarkings();
 
         startCarSpawner();
     }
@@ -447,6 +450,115 @@ public class GUIMain{
 
             streetPane.getChildren().add(stripe);
         }
+    }
+
+    //lane markings
+    private void drawArrowMarkings() {
+        for (Bearing bearing : Bearing.values()) {
+
+            //lane 0 = left turn
+            drawArrow(bearing, 0);
+
+        }
+    }
+
+    //draw arrows
+    private void drawArrow(Bearing bearing, int laneNumber) {
+        double intersectionLeft = (WINDOW_WIDTH - ROAD_WIDTH) / 2;
+        double intersectionTop = (WINDOW_HEIGHT - ROAD_WIDTH) / 2;
+
+        double x = 0;
+        double y = 0;
+
+        double rotation = 0;
+
+        Group arrow;
+
+        if(laneNumber == 0) {
+            arrow = createLeftTurnArrow();
+        }
+
+        else if(laneNumber == 1) {
+            //arrow = createStraightArrow();
+            return;
+        }
+
+        else {
+            //arrow = createRightTurnArrow();
+            return;
+        }
+
+        //position and rotate the arrows based on the direction of travel
+        switch(bearing) {
+            case North:
+                x = intersectionLeft + (LANES_PER_DIRECTION + laneNumber) * LANE_WIDTH + (double) LANE_WIDTH / 2;
+                y = WINDOW_HEIGHT / 2 + ROAD_WIDTH / 2 + CROSSWALK_WIDTH + STOPLINE_WIDTH * 2 + 10;
+
+                rotation = 0;
+                break;
+
+            case South:
+                x = intersectionLeft + (LANES_PER_DIRECTION - 1 - laneNumber) * LANE_WIDTH + (double) LANE_WIDTH / 2 + 20;
+                y = WINDOW_HEIGHT / 2 - ROAD_WIDTH / 2 - CROSSWALK_WIDTH - STOPLINE_WIDTH * 2 - 25;
+
+                rotation = 180;
+                break;
+
+            case East:
+                x = WINDOW_WIDTH / 2 - ROAD_WIDTH / 2 - CROSSWALK_WIDTH - STOPLINE_WIDTH * 2 - 10;
+                y = intersectionTop + (LANES_PER_DIRECTION + laneNumber) * LANE_WIDTH + (double) LANE_WIDTH / 2 - 15;
+
+                rotation = 90;
+                break;
+
+            case West:
+                x = WINDOW_WIDTH / 2 + ROAD_WIDTH / 2 + CROSSWALK_WIDTH + STOPLINE_WIDTH * 3 + CROSSWALK_OFFSET + 10;
+                y = intersectionTop + (LANES_PER_DIRECTION - 1 - laneNumber) * LANE_WIDTH + (double) LANE_WIDTH / 2;
+
+                rotation = 270;
+                break;
+        }
+
+        arrow.setLayoutX(x);
+        arrow.setLayoutY(y);
+
+        arrow.setRotate(rotation);
+
+        streetPane.getChildren().add(arrow);
+    }
+
+    //left turn arrow
+    private Group createLeftTurnArrow(){
+        Group arrow = new Group();
+
+        //base
+        Line base = new Line(0, LANE_WIDTH / 2.4, 0, 0);
+
+        //arrow
+        Line turn = new Line(0, 0, -LANE_WIDTH / 2.4, 0);
+
+        //arrow head
+        Line leftHead = new Line(-LANE_WIDTH / 2.4, 0, -LANE_WIDTH / 7.5, (double) -LANE_WIDTH / 6);
+        Line rightHead = new Line(-LANE_WIDTH / 2.4, 0, -LANE_WIDTH / 7.5, (double) LANE_WIDTH / 6);
+
+        base.setStroke(Color.WHITE);
+        turn.setStroke(Color.WHITE);
+        leftHead.setStroke(Color.WHITE);
+        rightHead.setStroke(Color.WHITE);
+
+        base.setStrokeWidth((double) LANE_WIDTH / 12);
+        turn.setStrokeWidth((double) LANE_WIDTH / 12);
+        leftHead.setStrokeWidth((double) LANE_WIDTH / 12);
+        rightHead.setStrokeWidth((double) LANE_WIDTH / 12);
+
+        arrow.getChildren().addAll(
+                base,
+                turn,
+                leftHead,
+                rightHead
+        );
+
+        return arrow;
     }
 
 

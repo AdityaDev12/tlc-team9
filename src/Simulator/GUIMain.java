@@ -1,16 +1,28 @@
 package Simulator;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import javafx.util.Duration;
+
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
+import java.util.Random;
 
+/*
+creates all javafx visuals and animations
+ */
 public class GUIMain{
     private final Stage primaryStage;
     private Pane streetPane;
@@ -19,7 +31,7 @@ public class GUIMain{
     private final double WINDOW_WIDTH;
     private final double WINDOW_HEIGHT;
 
-    // Distance between dashes
+    //distance between dashes
     private static final double DASH_LENGTH = 30;
     private static final double GAP_LENGTH = 20;
 
@@ -47,6 +59,31 @@ public class GUIMain{
     //store traffic light visuals
     private final ArrayList<TrafficLightVisual> trafficLights = new ArrayList<>();
 
+    //store all cars in the simulation
+    private final ArrayList<CarVisual> cars = new ArrayList<>();
+
+    //list of car images
+    private final List<String> carImages = List.of(
+            "/Audi.png",
+            "/Ambulance.png",
+            "/Black_viper.png",
+            "/Car.png",
+            "/Mini_truck.png",
+            "/Mini_van.png",
+            "/Police.png",
+            "/taxi.png",
+            "/truck.png");
+
+    //1 = low traffic, 10 = heavy traffic
+    private int traffic = 5;
+
+    private Timeline carSpawner;
+    private int nextCarID = 0;
+
+    private final Random random = new Random();
+
+    private static final double MIN_CAR_SPEED = 1.0;
+    private static final double MAX_CAR_SPEED = 4.0;
 
     public GUIMain(Stage primaryStage){
         this.primaryStage = primaryStage;
@@ -127,6 +164,8 @@ public class GUIMain{
 
             drawTrafficLight(x, y, "east");
         }
+
+        startCarSpawner();
     }
 
     //draw road
@@ -344,7 +383,7 @@ public class GUIMain{
         double x = intersectionLeft - LINE_LENGTH + STOPLINE_WIDTH + CROSSWALK_OFFSET;
 
         //draw horizontal crosswalk stripes
-        for(double y = intersectionTop; y < intersectionTop + ROAD_WIDTH; y+= CROSSWALK_GAP) {
+        for(double y = intersectionTop; y < intersectionTop + ROAD_WIDTH; y += CROSSWALK_GAP) {
             Rectangle stripe = new Rectangle(x, y + CROSSWALK_OFFSET, CROSSWALK_WIDTH, CROSSWALK_HEIGHT);
 
             stripe.setFill(Color.WHITE);
@@ -511,6 +550,7 @@ public class GUIMain{
         theLane.updateLights(LightID, Color);
     }
 
+    //change traffic light colors
     public void changeTrafficLight(int lightID, LightCol color) {
         //inactiveColors
         Color inactiveRed = Color.rgb(80, 20, 20);
@@ -540,9 +580,239 @@ public class GUIMain{
         }
     }
 
+    private void createCar(int id, GUILane lane, Bearing bearing, int laneNumber) {
+        //create the logic car
+        GUICar guiCar = new GUICar(id, lane, bearing);
 
+        //create visual car
+        String imagePath = carImages.get(random.nextInt(carImages.size()));
+
+        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath)));
+
+        ImageView car = new ImageView(image);
+
+        car.setFitWidth(LANE_WIDTH);
+        car.setFitHeight(LANE_WIDTH);
+
+        positionCar(car, bearing, laneNumber);
+
+        streetPane.getChildren().add(car);
+        System.out.println("car has been created.");
+
+        //random speed
+        double speed = MIN_CAR_SPEED + random.nextDouble() * (MAX_CAR_SPEED - MIN_CAR_SPEED);
+
+        //connect logic car with visual
+        CarVisual carVisual = new CarVisual(guiCar, car, speed);
+
+        //store car
+        cars.add(carVisual);
+
+        moveCar(carVisual);
+    }
+
+    //remove car
+    private void removeCar(CarVisual carVisual) {
+        //stop animation
+        if(carVisual.getTimeline() != null) {
+            carVisual.getTimeline().stop();
+        }
+
+        streetPane.getChildren().remove(carVisual.getImageView());
+        cars.remove(carVisual);
+    }
+
+    //initial position
+    //lane number starts at 0, left to right
+    private void positionCar(ImageView car, Bearing bearing, int laneNumber) {
+        if(laneNumber >= LANES_PER_DIRECTION) {
+            return;
+        }
+
+        //vertical road
+        double roadLeft = (WINDOW_WIDTH - ROAD_WIDTH) / 2;
+
+        //horizontal road
+        double roadTop = (WINDOW_HEIGHT - ROAD_WIDTH) / 2;
+
+        //calculate where the car sits on the road based on lane number and bearing
+        switch (bearing) {
+
+            case North:
+                //car travels upward
+                car.setX(roadLeft + (LANES_PER_DIRECTION + laneNumber) * LANE_WIDTH);
+                car.setY(WINDOW_HEIGHT);
+                break;
+
+
+            case South:
+                //car travels downward
+                car.setX(roadLeft + (LANES_PER_DIRECTION - 1 - laneNumber) * LANE_WIDTH);
+                car.setY(-LANE_WIDTH);
+
+                car.setRotate(180);
+                break;
+
+
+            case East:
+                //car travels right
+                car.setX(-LANE_WIDTH);
+                car.setY(roadTop + (LANES_PER_DIRECTION + laneNumber) * LANE_WIDTH);
+
+                car.setRotate(90);
+                break;
+
+
+            case West:
+                //car travels left
+                car.setX(WINDOW_WIDTH);
+                car.setY(roadTop + (LANES_PER_DIRECTION - 1 - laneNumber) * LANE_WIDTH);
+                car.setRotate(270);
+                break;
+        }
+    }
+
+    //animation to move the car
+    private void moveCar(CarVisual carVisual) {
+
+        ImageView car = carVisual.imageView;
+        Bearing bearing = carVisual.car.getBearing();
+
+        Timeline timeline = new Timeline(new KeyFrame(Duration.millis(16), event -> {
+            double speed = carVisual.getSpeed(); //pixels per frame
+
+            switch(bearing) {
+                case North:
+                    car.setY(car.getY() - speed);
+                    break;
+
+                case South:
+                    car.setY(car.getY() + speed);
+                    break;
+
+                case East:
+                    car.setX(car.getX() + speed);
+                    break;
+
+                case West:
+                    car.setX(car.getX() - speed);
+                    break;
+            }
+
+            if(isOutsideScreen(car, bearing)) {
+                removeCar(carVisual);
+                System.out.println("car has been removed.");
+            }
+        }));
+
+        timeline.setCycleCount(Timeline.INDEFINITE);
+
+        //store timeline for car
+        carVisual.setTimeline(timeline);
+
+        timeline.play();
+    }
+
+    //returns true if a car is outside the screen
+    private boolean isOutsideScreen(ImageView car, Bearing bearing) {
+
+        return switch (bearing) {
+            case North -> car.getY() + car.getFitHeight() < 0;
+            case South -> car.getY() > WINDOW_HEIGHT;
+            case East -> car.getX() > WINDOW_WIDTH;
+            case West -> car.getX() + car.getFitWidth() < 0;
+        };
+
+    }
+
+    //starts spawning car
+    private void startCarSpawner() {
+        if(traffic <= 0 || traffic > 10) {
+            return;
+        }
+
+        //traffic = 1; 3000 ms between cars
+        //traffic = 10; 750 ms between cars
+        double spawnInterval = 3000.0 - (traffic - 1) * 250.0;
+
+        carSpawner = new Timeline(new KeyFrame(Duration.millis(spawnInterval), event -> {
+            spawnCar();
+        }));
+
+        carSpawner.setCycleCount(Timeline.INDEFINITE);
+
+        carSpawner.play();
+    }
+
+    //set traffic
+    private void setTraffic(int traffic) {
+        if (traffic < 0 || traffic > 10) {
+            return;
+        }
+
+        this.traffic = traffic;
+
+        if (carSpawner != null) {
+            carSpawner.stop();
+        }
+
+        if(traffic > 0) {
+            startCarSpawner();
+        }
+
+    }
+
+    //spawns cars in random directions and lanes
+    private void spawnCar() {
+        //random direction
+        Bearing bearing = Bearing.values()[random.nextInt(Bearing.values().length)];
+
+        //random lane
+        //0, 1, or 2
+        int laneNumber = random.nextInt(LANES_PER_DIRECTION);
+
+        GUILane lane = null; //null for now
+
+        createCar(nextCarID, lane, bearing, laneNumber);
+
+        nextCarID++;
+    }
 
     //small private helper class to store traffic lights
     private record TrafficLightVisual(Circle redLight, Circle yellowLight, Circle greenLight) {
+    }
+
+    //small private helper class to store car visuals
+    private static class CarVisual {
+        private final GUICar car;
+        private final ImageView imageView;
+        private final double speed;
+        private Timeline timeline;
+
+        public CarVisual(GUICar car, ImageView imageView, double speed) {
+            this.car = car;
+            this.imageView = imageView;
+            this.speed = speed;
+        }
+
+        public GUICar getCar() {
+            return car;
+        }
+
+        public double getSpeed() {
+            return speed;
+        }
+
+        public ImageView getImageView() {
+            return imageView;
+        }
+
+        public Timeline getTimeline() {
+            return timeline;
+        }
+
+        public void setTimeline(Timeline timeline) {
+            this.timeline = timeline;
+        }
     }
 }

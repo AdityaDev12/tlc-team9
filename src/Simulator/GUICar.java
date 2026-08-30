@@ -6,10 +6,14 @@ public class GUICar implements Runnable {
     private int ID;
     private boolean isAlive = true;
 
-    public void GuiCar(int ID, GUILane myLane, Bearing myBearing){
+    public GUICar(int ID, GUILane myLane, Bearing myBearing){
         this.ID = ID;
         this.myLane = myLane;
         this.myBearing = myBearing;
+    }
+
+    public Bearing getBearing() {
+        return myBearing;
     }
 
     @Override

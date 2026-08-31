@@ -5,7 +5,7 @@ public class GUICar implements Runnable {
     private Bearing myBearing;
     private int ID;
     private boolean isAlive = true;
-    private int laneID;
+    private int laneID; //TODO will need to standardise laneNumber
     private int distance;
 
     public GUICar(int ID, GUILane myLane, Bearing myBearing, int laneID){
@@ -29,6 +29,8 @@ public class GUICar implements Runnable {
 
                     if(myLane.getLightCol(laneID) == LightCol.Green){
                         //GO
+
+
                     }else{
                         //DON'T GO
                     }

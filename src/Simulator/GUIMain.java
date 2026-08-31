@@ -141,7 +141,7 @@ public class GUIMain{
             double x = intersectionLeft + (lane * LANE_WIDTH) + (ROAD_WIDTH / 2);
             double y = intersectionBottom + LINE_LENGTH - (STOPLINE_WIDTH * 3) + CROSSWALK_OFFSET;
 
-            drawTrafficLight(x, y, "north");
+            drawTrafficLight(x, y, Bearing.North);
         }
 
         //southbound traffic lights
@@ -149,7 +149,7 @@ public class GUIMain{
             double x = intersectionLeft + (lane * LANE_WIDTH);
             double y = intersectionTop - LINE_LENGTH + STOPLINE_WIDTH;
 
-            drawTrafficLight(x, y, "south");
+            drawTrafficLight(x, y, Bearing.South);
         }
 
         //westbound traffic lights
@@ -157,7 +157,7 @@ public class GUIMain{
             double x = intersectionRight + LINE_LENGTH - (STOPLINE_WIDTH * 3) + CROSSWALK_OFFSET;
             double y = intersectionTop + (lane * LANE_WIDTH);
 
-            drawTrafficLight(x, y, "west");
+            drawTrafficLight(x, y, Bearing.West);
         }
 
         //eastbound traffic lights
@@ -165,7 +165,7 @@ public class GUIMain{
             double x = intersectionLeft - LINE_LENGTH + STOPLINE_WIDTH;
             double y = intersectionTop + (lane * LANE_WIDTH) + (ROAD_WIDTH / 2);
 
-            drawTrafficLight(x, y, "east");
+            drawTrafficLight(x, y, Bearing.East);
         }
         drawArrowMarkings();
 
@@ -627,7 +627,7 @@ public class GUIMain{
 
 
     //traffic light
-    private void drawTrafficLight(double x, double y, String direction) {
+    private void drawTrafficLight(double x, double y, Bearing bearing) {
         //size of housing
         double height = 25;
 
@@ -646,7 +646,7 @@ public class GUIMain{
         Circle yellowLight;
         Circle greenLight;
 
-        if(direction.equals("east") || direction.equals("west")) {
+        if(bearing == Bearing.East || bearing == Bearing.West) {
             //housing for lights
             housing = new Rectangle(x, y, height, LANE_WIDTH);
 
@@ -655,7 +655,7 @@ public class GUIMain{
             housing.setArcHeight(housing.getHeight() * 0.3333);
 
             //traffic lights
-            if(direction.equals("west")) {
+            if(bearing == Bearing.West) {
                 redLight = new Circle(x + 12.5, y + 10 + (2 * circumference) + gap, radius);
                 greenLight = new Circle(x + 12.5, y + 10 + gap, radius);
             }
@@ -687,7 +687,7 @@ public class GUIMain{
             housing.setArcHeight(housing.getHeight() * 0.8);
 
             //traffic lights
-            if(direction.equals("south")) {
+            if(bearing == Bearing.South) {
                 redLight = new Circle(x + 10 + (2 * circumference) + gap, y + 12.5, radius);
                 greenLight = new Circle(x + 10 + gap, y + 12.5, radius);
             }

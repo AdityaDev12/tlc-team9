@@ -11,14 +11,18 @@ public class GUILane {
         this.ID = ID;
 
         makeLights();
+        makeSensors();
     }
 
     private void makeLights() {
         myLights = new ArrayList<>();
     }
-
     private void makeSensors() {
         mySensors = new ArrayList<>();
+    }
+
+    public LightCol getLightCol(int laneID){
+        return myLights.get(laneID).getColor();
     }
     public void updateSensor(int ID, boolean isActive){
         mySensors.get(ID).setActive(isActive);

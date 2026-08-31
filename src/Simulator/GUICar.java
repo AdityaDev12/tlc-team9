@@ -26,11 +26,16 @@ public class GUICar implements Runnable {
             try{
                 if(distance == 50){
                     myLane.updateSensor(laneID, true);
-                }
 
-                //check sensor
-                //check light
-                //if green go otherwise wait
+                    if(myLane.getLightCol(laneID) == LightCol.Green){
+                        //GO
+                    }else{
+                        //DON'T GO
+                    }
+                }
+                if(distance == 51){
+                    myLane.updateSensor(laneID, false);
+                }
 
             } catch (Exception e) {
                 throw new RuntimeException(e);

@@ -5,7 +5,7 @@ import java.util.ArrayList;
 public class GUILane {
     private int ID;
     private ArrayList<GUILight> myLights = new ArrayList<>();
-    private GUISensor mySensor;
+    private ArrayList<GUISensor> mySensors = new ArrayList<>();
 
     public GUILane(int ID) {
         this.ID = ID;
@@ -13,12 +13,15 @@ public class GUILane {
         makeLights();
     }
 
-    public void makeLights() {
+    private void makeLights() {
         myLights = new ArrayList<>();
     }
 
-    public void makeSensor(GUISensor mySensor) {
-        this.mySensor = mySensor;
+    private void makeSensors() {
+        mySensors = new ArrayList<>();
+    }
+    public void updateSensor(int ID, boolean isActive){
+        mySensors.get(ID).setActive(isActive);
     }
     public void updateLights(int LightID, LightCol Color){
         GUILight theLight = myLights.get(LightID);

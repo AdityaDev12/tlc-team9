@@ -7,13 +7,16 @@ public class GUICar implements Runnable {
     private boolean isAlive = true;
     private int laneID; //TODO will need to standardise laneNumber
     private int distance;
+    private GUIIntersection intersection;
 
-    public GUICar(int ID, GUILane myLane, Bearing myBearing, int laneID){
+
+    public GUICar(int ID, GUILane myLane, Bearing myBearing, int laneID, GUIIntersection intersection) {
         this.ID = ID;
         this.myLane = myLane;
         this.myBearing = myBearing;
         this.distance = 0;
         this.laneID = laneID;
+        this.intersection = intersection;
     }
 
     public Bearing getBearing() {

@@ -2,7 +2,7 @@ package Simulator;
 
 public class GUISensor {
     private int ID;
-    private Boolean active;
+    private Boolean active = false;
     public GUISensor(int ID)
     {
         this.ID = ID;

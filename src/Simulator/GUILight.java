@@ -2,7 +2,7 @@ package Simulator;
 
 public class GUILight {
     private int ID;
-    private LightCol Color;
+    private LightCol Color = LightCol.Red;
     private LightShape Shape;
     private Bearing Direction;
 

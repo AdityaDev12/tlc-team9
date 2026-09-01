@@ -74,7 +74,8 @@ public class GUIMain{
             "/Mini_van.png",
             "/Police.png",
             "/taxi.png",
-            "/truck.png");
+            "/truck.png"
+    );
 
     //1 = low traffic, 10 = heavy traffic
     private int traffic = 5;
@@ -140,7 +141,7 @@ public class GUIMain{
             double x = intersectionLeft + (lane * LANE_WIDTH) + (ROAD_WIDTH / 2);
             double y = intersectionBottom + LINE_LENGTH - (STOPLINE_WIDTH * 3) + CROSSWALK_OFFSET;
 
-            drawTrafficLight(x, y, "north");
+            drawTrafficLight(x, y, Bearing.North);
         }
 
         //southbound traffic lights
@@ -148,7 +149,7 @@ public class GUIMain{
             double x = intersectionLeft + (lane * LANE_WIDTH);
             double y = intersectionTop - LINE_LENGTH + STOPLINE_WIDTH;
 
-            drawTrafficLight(x, y, "south");
+            drawTrafficLight(x, y, Bearing.South);
         }
 
         //westbound traffic lights
@@ -156,7 +157,7 @@ public class GUIMain{
             double x = intersectionRight + LINE_LENGTH - (STOPLINE_WIDTH * 3) + CROSSWALK_OFFSET;
             double y = intersectionTop + (lane * LANE_WIDTH);
 
-            drawTrafficLight(x, y, "west");
+            drawTrafficLight(x, y, Bearing.West);
         }
 
         //eastbound traffic lights
@@ -164,7 +165,7 @@ public class GUIMain{
             double x = intersectionLeft - LINE_LENGTH + STOPLINE_WIDTH;
             double y = intersectionTop + (lane * LANE_WIDTH) + (ROAD_WIDTH / 2);
 
-            drawTrafficLight(x, y, "east");
+            drawTrafficLight(x, y, Bearing.East);
         }
         drawArrowMarkings();
 
@@ -455,9 +456,9 @@ public class GUIMain{
     //lane markings
     private void drawArrowMarkings() {
         for (Bearing bearing : Bearing.values()) {
-
-            //lane 0 = left turn
-            drawArrow(bearing, 0);
+            for(int i = 0; i < LANES_PER_DIRECTION; i++) {
+                drawArrow(bearing, i);
+            }
 
         }
     }
@@ -465,7 +466,10 @@ public class GUIMain{
     //draw arrows
     private void drawArrow(Bearing bearing, int laneNumber) {
         double intersectionLeft = (WINDOW_WIDTH - ROAD_WIDTH) / 2;
+        double intersectionRight = intersectionLeft + ROAD_WIDTH;
+
         double intersectionTop = (WINDOW_HEIGHT - ROAD_WIDTH) / 2;
+        double intersectionBottom = intersectionTop + ROAD_WIDTH;
 
         double x = 0;
         double y = 0;
@@ -478,51 +482,49 @@ public class GUIMain{
             arrow = createLeftTurnArrow();
         }
 
-        else if(laneNumber == 1) {
-            //arrow = createStraightArrow();
-            return;
+        else if(laneNumber == 2) {
+            arrow = createRightTurnArrow();
         }
 
         else {
-            //arrow = createRightTurnArrow();
-            return;
+            arrow = createStraightArrow();
         }
 
         //position and rotate the arrows based on the direction of travel
         switch(bearing) {
             case North:
-                x = intersectionLeft + (LANES_PER_DIRECTION + laneNumber) * LANE_WIDTH + (double) LANE_WIDTH / 2;
-                y = WINDOW_HEIGHT / 2 + ROAD_WIDTH / 2 + CROSSWALK_WIDTH + STOPLINE_WIDTH * 2 + 10;
+                x = intersectionLeft + (LANES_PER_DIRECTION + laneNumber) * LANE_WIDTH + LANE_WIDTH / 2.0;
+                y = intersectionBottom + CROSSWALK_WIDTH + CROSSWALK_OFFSET + STOPLINE_WIDTH * 3;
 
                 rotation = 0;
                 break;
 
             case South:
-                x = intersectionLeft + (LANES_PER_DIRECTION - 1 - laneNumber) * LANE_WIDTH + (double) LANE_WIDTH / 2 + 20;
-                y = WINDOW_HEIGHT / 2 - ROAD_WIDTH / 2 - CROSSWALK_WIDTH - STOPLINE_WIDTH * 2 - 25;
+                x = intersectionLeft + (LANES_PER_DIRECTION - 1 - laneNumber) * LANE_WIDTH + LANE_WIDTH / 2.0;
+                y = intersectionTop - CROSSWALK_WIDTH - CROSSWALK_OFFSET - STOPLINE_WIDTH * 3;
 
                 rotation = 180;
                 break;
 
             case East:
-                x = WINDOW_WIDTH / 2 - ROAD_WIDTH / 2 - CROSSWALK_WIDTH - STOPLINE_WIDTH * 2 - 10;
-                y = intersectionTop + (LANES_PER_DIRECTION + laneNumber) * LANE_WIDTH + (double) LANE_WIDTH / 2 - 15;
+                x = intersectionLeft - CROSSWALK_WIDTH - CROSSWALK_OFFSET - STOPLINE_WIDTH * 3;
+                y = intersectionTop + (LANES_PER_DIRECTION + laneNumber) * LANE_WIDTH + LANE_WIDTH / 2.0;
 
                 rotation = 90;
                 break;
 
             case West:
-                x = WINDOW_WIDTH / 2 + ROAD_WIDTH / 2 + CROSSWALK_WIDTH + STOPLINE_WIDTH * 3 + CROSSWALK_OFFSET + 10;
-                y = intersectionTop + (LANES_PER_DIRECTION - 1 - laneNumber) * LANE_WIDTH + (double) LANE_WIDTH / 2;
+                x = intersectionRight + CROSSWALK_WIDTH + CROSSWALK_OFFSET + STOPLINE_WIDTH * 3;
+                y = intersectionTop + (LANES_PER_DIRECTION - 1 - laneNumber) * LANE_WIDTH +  LANE_WIDTH / 2.0;
 
                 rotation = 270;
                 break;
         }
+        //pivot the rotation around (0, 0)
+        arrow.getTransforms().add(new javafx.scene.transform.Rotate(rotation, 0, 0));
 
         arrow.setLayoutX(x);
         arrow.setLayoutY(y);
-
-        arrow.setRotate(rotation);
 
         streetPane.getChildren().add(arrow);
     }
@@ -532,24 +534,86 @@ public class GUIMain{
         Group arrow = new Group();
 
         //base
-        Line base = new Line(0, LANE_WIDTH / 2.4, 0, 0);
+        Line base = new Line(0, LANE_WIDTH / 1.5, 0, 0);
 
         //arrow
         Line turn = new Line(0, 0, -LANE_WIDTH / 2.4, 0);
 
         //arrow head
-        Line leftHead = new Line(-LANE_WIDTH / 2.4, 0, -LANE_WIDTH / 7.5, (double) -LANE_WIDTH / 6);
-        Line rightHead = new Line(-LANE_WIDTH / 2.4, 0, -LANE_WIDTH / 7.5, (double) LANE_WIDTH / 6);
+        Line leftHead = new Line(-LANE_WIDTH / 2.4, 0, -LANE_WIDTH / 7.5, -LANE_WIDTH / 6.0);
+        Line rightHead = new Line(-LANE_WIDTH / 2.4, 0, -LANE_WIDTH / 7.5, LANE_WIDTH / 6.0);
 
         base.setStroke(Color.WHITE);
         turn.setStroke(Color.WHITE);
         leftHead.setStroke(Color.WHITE);
         rightHead.setStroke(Color.WHITE);
 
-        base.setStrokeWidth((double) LANE_WIDTH / 12);
-        turn.setStrokeWidth((double) LANE_WIDTH / 12);
-        leftHead.setStrokeWidth((double) LANE_WIDTH / 12);
-        rightHead.setStrokeWidth((double) LANE_WIDTH / 12);
+        base.setStrokeWidth(LANE_WIDTH / 12.0);
+        turn.setStrokeWidth(LANE_WIDTH / 12.0);
+        leftHead.setStrokeWidth(LANE_WIDTH / 12.0);
+        rightHead.setStrokeWidth(LANE_WIDTH / 12.0);
+
+        arrow.getChildren().addAll(
+                base,
+                turn,
+                leftHead,
+                rightHead
+        );
+
+        return arrow;
+    }
+
+    //straight arrow
+    private Group createStraightArrow() {
+        Group arrow = new Group();
+
+        //base
+        Line base = new Line(0, LANE_WIDTH / 1.5, 0, 0);
+
+        //arrow head
+        Line leftHead = new Line(0, 0, -LANE_WIDTH / 6.0, LANE_WIDTH / 7.5);
+        Line rightHead = new Line(0, 0, LANE_WIDTH / 6.0, LANE_WIDTH / 7.5);
+
+        base.setStroke(Color.WHITE);
+        leftHead.setStroke(Color.WHITE);
+        rightHead.setStroke(Color.WHITE);
+
+        base.setStrokeWidth(LANE_WIDTH / 12.0);
+        leftHead.setStrokeWidth(LANE_WIDTH / 12.0);
+        rightHead.setStrokeWidth(LANE_WIDTH / 12.0);
+
+        arrow.getChildren().addAll(
+                base,
+                leftHead,
+                rightHead
+        );
+
+        return arrow;
+    }
+
+    //right turn arrow
+    private Group createRightTurnArrow(){
+        Group arrow = new Group();
+
+        //base
+        Line base = new Line(0, LANE_WIDTH / 1.5, 0, 0);
+
+        //arrow
+        Line turn = new Line(0, 0, LANE_WIDTH / 2.4, 0);
+
+        //arrow head
+        Line leftHead = new Line(LANE_WIDTH / 2.4, 0, LANE_WIDTH / 7.5, -LANE_WIDTH / 6.0);
+        Line rightHead = new Line(LANE_WIDTH / 2.4, 0, LANE_WIDTH / 7.5, LANE_WIDTH / 6.0);
+
+        base.setStroke(Color.WHITE);
+        turn.setStroke(Color.WHITE);
+        leftHead.setStroke(Color.WHITE);
+        rightHead.setStroke(Color.WHITE);
+
+        base.setStrokeWidth(LANE_WIDTH / 12.0);
+        turn.setStrokeWidth(LANE_WIDTH / 12.0);
+        leftHead.setStrokeWidth(LANE_WIDTH / 12.0);
+        rightHead.setStrokeWidth(LANE_WIDTH / 12.0);
 
         arrow.getChildren().addAll(
                 base,
@@ -562,10 +626,8 @@ public class GUIMain{
     }
 
 
-
-
     //traffic light
-    private void drawTrafficLight(double x, double y, String direction) {
+    private void drawTrafficLight(double x, double y, Bearing bearing) {
         //size of housing
         double height = 25;
 
@@ -584,7 +646,7 @@ public class GUIMain{
         Circle yellowLight;
         Circle greenLight;
 
-        if(direction.equals("east") || direction.equals("west")) {
+        if(bearing == Bearing.East || bearing == Bearing.West) {
             //housing for lights
             housing = new Rectangle(x, y, height, LANE_WIDTH);
 
@@ -593,7 +655,7 @@ public class GUIMain{
             housing.setArcHeight(housing.getHeight() * 0.3333);
 
             //traffic lights
-            if(direction.equals("west")) {
+            if(bearing == Bearing.West) {
                 redLight = new Circle(x + 12.5, y + 10 + (2 * circumference) + gap, radius);
                 greenLight = new Circle(x + 12.5, y + 10 + gap, radius);
             }
@@ -625,7 +687,7 @@ public class GUIMain{
             housing.setArcHeight(housing.getHeight() * 0.8);
 
             //traffic lights
-            if(direction.equals("south")) {
+            if(bearing == Bearing.South) {
                 redLight = new Circle(x + 10 + (2 * circumference) + gap, y + 12.5, radius);
                 greenLight = new Circle(x + 10 + gap, y + 12.5, radius);
             }

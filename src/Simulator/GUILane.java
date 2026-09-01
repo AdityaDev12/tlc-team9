@@ -13,10 +13,16 @@ public class GUILane {
         makeLights();
     }
 
-    public void makeLights() {
-        myLights = new ArrayList<>();
+    private void makeLights() {
+        LightShape shape = switch (laneNumber) {
+            case 0 -> LightShape.LeftArrow;
+            case 2 -> LightShape.RightArrow;
+            default -> LightShape.Circle;
+        };
+        myLights.add(new GUILight(0, shape, direction));
+        myLights.add(new GUILight(1, shape, direction));
+        myLights.add(new GUILight(2, shape, direction));
     }
-
     public void makeSensor(GUISensor mySensor) {
         this.mySensor = mySensor;
     }

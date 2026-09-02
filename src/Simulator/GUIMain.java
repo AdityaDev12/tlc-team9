@@ -177,21 +177,21 @@ public class GUIMain{
         }
 
 
-            double x = intersectionLeft + (1 * LANE_WIDTH) + (ROAD_WIDTH / 2);
-            double y = intersectionBottom + LINE_LENGTH - (STOPLINE_WIDTH * 3) + CROSSWALK_OFFSET;
-            drawTrafficLight(x, y, Bearing.North);
+        double x = intersectionLeft + (1 * LANE_WIDTH) + (ROAD_WIDTH / 2);
+        double y = intersectionBottom + LINE_LENGTH - (STOPLINE_WIDTH * 3) + CROSSWALK_OFFSET;
+        drawPedLight(x, y, Bearing.North);
 
-             x = intersectionLeft + (2 * LANE_WIDTH);
-             y = intersectionTop - LINE_LENGTH + STOPLINE_WIDTH;
-            drawTrafficLight(x, y, Bearing.South);
+        x = intersectionLeft + (2 * LANE_WIDTH);
+        y = intersectionTop - LINE_LENGTH + STOPLINE_WIDTH;
+        drawPedLight(x, y, Bearing.South);
 
-             x = intersectionRight + LINE_LENGTH - (STOPLINE_WIDTH * 3) + CROSSWALK_OFFSET;
-             y = intersectionTop + (3 * LANE_WIDTH);
-            drawTrafficLight(x, y, Bearing.West);
+        x = intersectionRight + LINE_LENGTH - (STOPLINE_WIDTH * 3) + CROSSWALK_OFFSET;
+        y = intersectionTop + (3 * LANE_WIDTH);
+        drawPedLight(x, y, Bearing.West);
 
-             x = intersectionLeft - LINE_LENGTH + STOPLINE_WIDTH;
-             y = intersectionTop + (4 * LANE_WIDTH) + (ROAD_WIDTH / 2);
-            drawTrafficLight(x, y, Bearing.East);
+        x = intersectionLeft - LINE_LENGTH + STOPLINE_WIDTH;
+        y = intersectionTop + (4 * LANE_WIDTH) + (ROAD_WIDTH / 2);
+        drawPedLight(x, y, Bearing.East);
 
 
         drawArrowMarkings();
@@ -708,6 +708,16 @@ public class GUIMain{
         Rectangle housing;
         Rectangle inner;
         Text timer;
+
+        housing = new Rectangle(x , y, width, width);
+        housing.setArcWidth(housing.getWidth() * 0.8);
+        housing.setArcHeight(housing.getHeight() * 0.8);
+        housing.setFill(Color.DARKGRAY);
+
+        inner = new Rectangle(x , y, width*.7, width*.7);
+        inner.setFill(Color.GRAY);
+        inner.setArcHeight(inner.getHeight()*.8);
+        inner.setArcWidth(inner.getWidth()*.8);
     }
 
     //traffic light

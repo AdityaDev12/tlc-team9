@@ -3,23 +3,18 @@ package Protocol;
 /**
  * Every valid command type in the TLC instruction protocol.
  *
- * INBOUND  = sent by the controller/server, consumed by your GUI layer
- *            (you parse these and call into the JavaFX animation controller).
- * OUTBOUND = sent by your GUI layer out to the server
- *            (simulated hardware events: sensors, buttons, EMS receiver).
- *
- * Keeping both directions in one enum keeps the protocol single-source-of-truth:
- * everyone on the team imports this file instead of hardcoding strings.
+ * LIGHT = carried by InstructionMessage (server -> GUI light-state renders).
+ * EVENT = carried by SimulatorEvent, in either direction (all other traffic).
  */
 public enum TLCCommand {
 
-    // ---- INBOUND: server -> GUI (render instructions) ----
+    // ---- LIGHT: carried by InstructionMessage ----
     SET_LIGHT_STATE,          // target = "NORTH_THROUGH" etc, value = RED|YELLOW|GREEN
+
+    // ---- EVENT: carried by SimulatorEvent (either direction) ----
     UPDATE_PEDESTRIAN_SIGNAL, // target = "NORTH" (crossing id), value = WALK|WAIT
     TRIGGER_FAIL_SAFE,        // target = "ALL", value = FLASH_RED|FLASH_YELLOW
     RESUME_NORMAL,            // target = "ALL", value = "NORMAL"
-
-    // ---- OUTBOUND: GUI -> server (simulated hardware events) ----
     VEHICLE_DETECTED,           // target = lane id, value = "DETECTED"
     VEHICLE_CLEARED,            // target = lane id, value = "CLEARED"
     PEDESTRIAN_BUTTON_PRESSED,  // target = crossing id, value = "PRESSED"

@@ -3,7 +3,7 @@ package Protocol;
 /**
  * A single event message, carried in either direction (server <-> GUI) for
  * every {@link TLCCommand} other than SET_LIGHT_STATE. Plain data holder;
- * wire-format building/parsing lives in {@link Protocol}.
+ * wire-format building/parsing lives in {@link Wire}.
  */
 public final class SimulatorEvent {
 
@@ -23,6 +23,6 @@ public final class SimulatorEvent {
 
     @Override
     public String toString() {
-        return Protocol.buildEvent(command, target, value);
+        return Wire.buildEvent(command, target, value);
     }
 }

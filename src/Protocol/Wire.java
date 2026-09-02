@@ -10,11 +10,11 @@ import Simulator.LightShape;
  * Light instructions (5 fields): COMMAND:LIGHT_ID:COLOR:SHAPE:DIRECTION
  * Events (3 fields):             COMMAND:TARGET:VALUE
  */
-public final class Protocol {
+public final class Wire {
 
     private static final String DELIMITER = ":";
 
-    private Protocol() {
+    private Wire() {
     }
 
     /** Serializes a light-state instruction to its wire format. */

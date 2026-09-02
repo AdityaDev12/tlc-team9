@@ -6,7 +6,7 @@ import Simulator.LightShape;
 
 /**
  * A single light-state instruction (server -> GUI). Plain data holder;
- * wire-format building/parsing lives in {@link Protocol}.
+ * wire-format building/parsing lives in {@link Wire}.
  */
 public final class InstructionMessage {
 
@@ -32,6 +32,6 @@ public final class InstructionMessage {
 
     @Override
     public String toString() {
-        return Protocol.buildLightInstruction(command, lightID, color, shape, direction);
+        return Wire.buildLightInstruction(command, lightID, color, shape, direction);
     }
 }

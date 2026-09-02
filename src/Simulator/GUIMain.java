@@ -17,6 +17,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Text;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -65,6 +66,8 @@ public class GUIMain{
 
     //store traffic light visuals
     private final ArrayList<TrafficLightVisual> trafficLights = new ArrayList<>();
+    private final ArrayList<PedLightVisual> pedLights = new ArrayList<>();
+
 
     //store all cars in the simulation
     private final ArrayList<CarVisual> cars = new ArrayList<>();
@@ -681,8 +684,11 @@ public class GUIMain{
         return arrow;
     }
 
-    private void drawPedLight(){
+    private void drawPedLight(double x, double y, Bearing bearing){
         double width = 10;
+        Rectangle housing;
+        Rectangle inner;
+        Text timer;
     }
 
     //traffic light
@@ -1106,6 +1112,7 @@ public class GUIMain{
     //small private helper class to store traffic lights
     private record TrafficLightVisual(Circle redLight, Circle yellowLight, Circle greenLight) {
     }
+    private record PedLightVisual(Rectangle base, Rectangle inner, Text timer) {}
 
     //small private helper class to store car visuals
     private static class CarVisual {

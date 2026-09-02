@@ -5,11 +5,18 @@ public class GUICar implements Runnable {
     private Bearing myBearing;
     private int ID;
     private boolean isAlive = true;
+    private int laneID; //TODO will need to standardise laneNumber
+    private int distance;
+    private GUIIntersection intersection;
 
-    public GUICar(int ID, GUILane myLane, Bearing myBearing){
+
+    public GUICar(int ID, GUILane myLane, Bearing myBearing, int laneID, GUIIntersection intersection) {
         this.ID = ID;
         this.myLane = myLane;
         this.myBearing = myBearing;
+        this.distance = 0;
+        this.laneID = laneID;
+        this.intersection = intersection;
     }
 
     public Bearing getBearing() {
@@ -20,8 +27,21 @@ public class GUICar implements Runnable {
     public void run() {
         while (isAlive) {
             try{
-                //check light
-                //if green go otherwise wait
+                if(distance == 50){
+                    myLane.updateSensor(laneID, true);
+
+                    if(myLane.getLightCol(laneID) == LightCol.Green){
+                        //GO
+
+
+                    }else{
+                        //DON'T GO
+                    }
+                }
+                if(distance == 51){
+                    myLane.updateSensor(laneID, false);
+                }
+
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

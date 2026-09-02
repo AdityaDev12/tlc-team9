@@ -2,13 +2,9 @@ package Simulator;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
-import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Group;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.Slider;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
@@ -71,6 +67,7 @@ public class GUIMain{
     //list of car images
     private final List<String> carImages = List.of(
             "/Audi.png",
+            "/Ambulance.png",
             "/Black_viper.png",
             "/Car.png",
             "/Mini_truck.png",
@@ -109,7 +106,6 @@ public class GUIMain{
         streetPane.setPrefSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 
         createIntersection();
-        makeControls();
 
 
         BorderPane root = new BorderPane();
@@ -121,49 +117,6 @@ public class GUIMain{
 
         primaryStage.setScene(new Scene(root, WINDOW_WIDTH,WINDOW_HEIGHT));
         primaryStage.show();
-    }
-
-    //controls
-    private void makeControls() {
-        HBox controls = new HBox(10);
-
-        Label trafficLabel = new Label("Traffic");
-
-        Slider trafficSlider = new Slider(0, 10, 5);
-        Button spawnCarButton = new Button("Spawn Car");
-        Button spawnEMSButton = new Button("Spawn EMS");
-
-        trafficSlider.setShowTickLabels(true);
-        trafficSlider.setShowTickMarks(true);
-        trafficSlider.setMajorTickUnit(1);
-        trafficSlider.setMinorTickCount(0);
-        trafficSlider.setSnapToTicks(true);
-
-        trafficSlider.valueProperty().addListener((obs, oldValue, newValue) -> {
-            int trafficLevel = newValue.intValue();
-            setTraffic(trafficLevel);
-        });
-
-        spawnCarButton.setOnAction(event -> {
-            spawnCar(false);
-        });
-
-        spawnEMSButton.setOnAction(event -> {
-            spawnCar(true);
-        });
-
-        controls.getChildren().addAll(
-                trafficLabel,
-                trafficSlider,
-                spawnCarButton,
-                spawnEMSButton
-        );
-
-        controls.setLayoutX(20);
-        controls.setLayoutY(WINDOW_HEIGHT - 100);
-
-        streetPane.getChildren().add(controls);
-
     }
 
     //creates the intersection
@@ -801,21 +754,14 @@ public class GUIMain{
         }
     }
 
-    private void createCar(int id, GUILane lane, Bearing bearing, int laneNumber, boolean EMS) {
+    private void createCar(int id, GUILane lane, Bearing bearing, int laneNumber) {
         //create the logic car
-        GUICar guiCar = new GUICar(id, lane, bearing);
-        Image image;
-        if(EMS) {
-            image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/Ambulance.png")));
-        }
+        GUICar guiCar = new GUICar(id, lane, bearing, laneNumber); //TODO will need to standardise laneNumber
 
-        else {
-            //create visual car
-            String imagePath = carImages.get(random.nextInt(carImages.size()));
+        //create visual car
+        String imagePath = carImages.get(random.nextInt(carImages.size()));
 
-            image = new Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath)));
-        }
-
+        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath)));
 
         ImageView car = new ImageView(image);
 
@@ -831,7 +777,7 @@ public class GUIMain{
         double speed = MIN_CAR_SPEED + random.nextDouble() * (MAX_CAR_SPEED - MIN_CAR_SPEED);
 
         //connect logic car with visual
-        CarVisual carVisual = new CarVisual(guiCar, car, speed, laneNumber);
+        CarVisual carVisual = new CarVisual(guiCar, car, speed);
 
         //store car
         cars.add(carVisual);
@@ -904,12 +850,10 @@ public class GUIMain{
     private void moveCar(CarVisual carVisual) {
 
         ImageView car = carVisual.imageView;
+        Bearing bearing = carVisual.car.getBearing();
 
         Timeline timeline = new Timeline(new KeyFrame(Duration.millis(16), event -> {
             double speed = carVisual.getSpeed(); //pixels per frame
-
-            //current bearing
-            Bearing bearing = carVisual.getCurrentBearing();
 
             switch(bearing) {
                 case North:
@@ -929,14 +873,6 @@ public class GUIMain{
                     break;
             }
 
-            //check if car reached intersection
-            if(!carVisual.hasTurned() && carVisual.getLaneNumber() != 1 && reachedIntersection(car, bearing)) {
-                carVisual.setHasTurned(true);
-
-                System.out.println("turning");
-                //startTurn(carVisual);
-            }
-
             if(isOutsideScreen(car, bearing)) {
                 removeCar(carVisual);
                 System.out.println("car has been removed.");
@@ -949,24 +885,6 @@ public class GUIMain{
         carVisual.setTimeline(timeline);
 
         timeline.play();
-    }
-
-    //determines if car has reached the intersection
-    private boolean reachedIntersection(ImageView car, Bearing bearing) {
-        double intersectionLeft = (WINDOW_WIDTH - ROAD_WIDTH) / 2;
-
-        double intersectionRight = intersectionLeft + ROAD_WIDTH;
-
-        double intersectionTop = (WINDOW_HEIGHT - ROAD_WIDTH) / 2;
-
-        double intersectionBottom = intersectionTop + ROAD_WIDTH;
-
-        return switch (bearing) {
-            case North -> car.getY() <= intersectionBottom;
-            case South -> car.getY() + car.getFitHeight() >= intersectionTop;
-            case East -> car.getX() + car.getFitHeight() >= intersectionLeft;
-            case West -> car.getX() <= intersectionRight;
-        };
     }
 
     //returns true if a car is outside the screen
@@ -983,10 +901,6 @@ public class GUIMain{
 
     //starts spawning car
     private void startCarSpawner() {
-        if(carSpawner != null) {
-            carSpawner.stop();
-        }
-
         if(traffic <= 0 || traffic > 10) {
             return;
         }
@@ -996,7 +910,7 @@ public class GUIMain{
         double spawnInterval = 3000.0 - (traffic - 1) * 250.0;
 
         carSpawner = new Timeline(new KeyFrame(Duration.millis(spawnInterval), event -> {
-            spawnCar(false);
+            spawnCar();
         }));
 
         carSpawner.setCycleCount(Timeline.INDEFINITE);
@@ -1023,7 +937,7 @@ public class GUIMain{
     }
 
     //spawns cars in random directions and lanes
-    private void spawnCar(boolean EMS) {
+    private void spawnCar() {
         //random direction
         Bearing bearing = Bearing.values()[random.nextInt(Bearing.values().length)];
 
@@ -1033,7 +947,7 @@ public class GUIMain{
 
         GUILane lane = null; //null for now
 
-        createCar(nextCarID, lane, bearing, laneNumber, EMS);
+        createCar(nextCarID, lane, bearing, laneNumber);
 
         nextCarID++;
     }
@@ -1048,37 +962,11 @@ public class GUIMain{
         private final ImageView imageView;
         private final double speed;
         private Timeline timeline;
-        private final int laneNumber;
 
-        private Bearing currentBearing;
-        private boolean hasTurned = false;
-
-        public CarVisual(GUICar car, ImageView imageView, double speed, int laneNumber) {
+        public CarVisual(GUICar car, ImageView imageView, double speed) {
             this.car = car;
             this.imageView = imageView;
             this.speed = speed;
-            this.laneNumber = laneNumber;
-            this.currentBearing = car.getBearing();
-        }
-
-        public Bearing getCurrentBearing() {
-            return currentBearing;
-        }
-
-        public void setCurrentBearing(Bearing bearing) {
-            this.currentBearing = bearing;
-        }
-
-        public boolean hasTurned() {
-            return hasTurned;
-        }
-
-        public void setHasTurned(boolean hasTurned) {
-            this.hasTurned = hasTurned;
-        }
-
-        public int getLaneNumber() {
-            return laneNumber;
         }
 
         public GUICar getCar() {

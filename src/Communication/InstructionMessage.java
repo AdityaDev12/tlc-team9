@@ -1,6 +1,6 @@
 package Communication;
 
-import Simulator.Bearing;
+import Simulator.Position;
 import Simulator.LightCol;
 import Simulator.LightShape;
 
@@ -17,14 +17,14 @@ public class InstructionMessage {
     private int lightID;
     private LightCol color;
     private LightShape shape;
-    private Bearing direction;
+    private Position position;
 
-    public InstructionMessage(TLCCommand command, int lightID, LightCol color, LightShape shape, Bearing direction) {
+    public InstructionMessage(TLCCommand command, int lightID, LightCol color, LightShape shape, Position position) {
         this.command = command;
         this.lightID = lightID;
         this.color = color;
         this.shape = shape;
-        this.direction = direction;
+        this.position = position;
     }
 
     public TLCCommand getCommand() { return command; }
@@ -37,13 +37,13 @@ public class InstructionMessage {
     public LightShape getShape() {
         return shape;
     }
-    public Bearing getDirection() {
-        return direction;
+    public Position getDirection() {
+        return position;
     }
 
     /** Serializes this message to the wire format string sent over the socket. */
     public String toWireFormat() {
-        return String.join(DELIMITER, command.name(), String.valueOf(lightID), color.name(), shape.name(), direction.name());
+        return String.join(DELIMITER, command.name(), String.valueOf(lightID), color.name(), shape.name(), position.name());
     }
 
     /** Parses one raw line read off the socket back into a message object. */
@@ -59,8 +59,8 @@ public class InstructionMessage {
         int lightID = Integer.parseInt(parts[1]);
         LightCol color = LightCol.valueOf(parts[2]);
         LightShape shape = LightShape.valueOf(parts[3]);
-        Bearing direction = Bearing.valueOf(parts[4]);
-        return new InstructionMessage(command, lightID, color, shape, direction);
+        Position position = Position.valueOf(parts[4]);
+        return new InstructionMessage(command, lightID, color, shape, position);
     }
 
     @Override

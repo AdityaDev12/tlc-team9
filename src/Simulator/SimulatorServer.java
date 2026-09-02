@@ -3,6 +3,7 @@ package Simulator;
 import Communication.InstructionMessage;
 import Communication.SimulatorEvent;
 import Communication.TLCCommand;
+import javafx.application.Platform;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -22,6 +23,12 @@ public class SimulatorServer {
     private Socket socket;
     private BufferedReader input;
     private PrintWriter output;
+
+    // Server's access to GUIMain
+    private final GUIMain gui;
+    public SimulatorServer(GUIMain gui) {
+        this.gui = gui;
+    }
 
     public void start() {
         try {
@@ -64,6 +71,13 @@ public class SimulatorServer {
     // Handles instruction from Harness
     private void handleInstruction(InstructionMessage message) {
         System.out.println("Handling instruction: " + message.toWireFormat());
+        // SET_LIGHT_STATE
+        if (message.getCommand() == TLCCommand.SET_LIGHT_STATE) {
+            Bearing guiBearing = directionToBearing(message.getDirection());
+            Platform.runLater(() -> {
+                gui.changeTrafficLight(message.getLightID(), message.getColor(), message.getShape(), guiBearing);
+            });
+        }
     }
 
     // Sends event to Harness
@@ -78,5 +92,15 @@ public class SimulatorServer {
             socket.close();
         }
         System.out.println("Simulator connection closed.");
+    }
+
+    // Converts bearing into physical position
+    private Bearing directionToBearing(Position position) {
+        return switch (position) {
+            case North -> Bearing.South;
+            case South -> Bearing.North;
+            case East -> Bearing.West;
+            case West -> Bearing.East;
+        };
     }
 }

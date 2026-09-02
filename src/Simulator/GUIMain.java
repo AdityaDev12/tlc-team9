@@ -97,6 +97,9 @@ public class GUIMain{
     private static final double MIN_CAR_SPEED = 1.0;
     private static final double MAX_CAR_SPEED = 4.0;
 
+    private Circle emsIndicator;
+    private Label emsLabel;
+
     public GUIMain(Stage primaryStage){
         this.primaryStage = primaryStage;
 
@@ -245,6 +248,7 @@ public class GUIMain{
 
         spawnEMSButton.setOnAction(event -> {
             spawnCar(true);
+            setEMSIndicator(true);
         });
 
         clearAllCars.setOnAction(event -> {
@@ -264,8 +268,53 @@ public class GUIMain{
         controls.setLayoutX(20);
         controls.setLayoutY(WINDOW_HEIGHT - 120);
 
+        createEMSIndicator();
+
         streetPane.getChildren().add(controls);
 
+    }
+
+    //ems indicator
+    private void createEMSIndicator() {
+
+        emsIndicator = new Circle(8, Color.DARKGRAY);
+
+        emsLabel = new Label("EMS SIGNAL: NOT RECEIVED");
+        emsLabel.setTextFill(Color.WHITE);
+
+        HBox emsBox = new HBox(8);
+        emsBox.getChildren().addAll(emsIndicator, emsLabel);
+
+        emsBox.setLayoutX(20);
+        emsBox.setLayoutY(20);
+
+        streetPane.getChildren().add(emsBox);
+    }
+
+    //set ems indicator
+    private void setEMSIndicator(boolean received) {
+
+        if (received) {
+
+            emsIndicator.setFill(Color.LIMEGREEN);
+            emsLabel.setText("EMS SIGNAL: RECEIVED");
+
+            DropShadow glow = new DropShadow();
+            glow.setColor(Color.LIMEGREEN);
+            glow.setRadius(15);
+            glow.setSpread(0.5);
+
+            emsIndicator.setEffect(glow);
+
+        }
+
+        else {
+
+            emsIndicator.setFill(Color.DARKGRAY);
+            emsLabel.setText("EMS SIGNAL: NOT RECEIVED");
+
+            emsIndicator.setEffect(null);
+        }
     }
 
     //logic lanes
@@ -1026,7 +1075,7 @@ public class GUIMain{
 
     private void createCar(int id, GUILane lane, Bearing bearing, int laneNumber, boolean EMS) {
         //create the logic car
-        GUICar guiCar = new GUICar(id, lane, bearing, laneNumber, null); //TODO will need to standardise laneNumber
+        GUICar guiCar = new GUICar(id, lane, bearing, laneNumber, null, EMS); //TODO will need to standardise laneNumber
         Image image;
 
         if(EMS) {
@@ -1059,6 +1108,8 @@ public class GUIMain{
         cars.add(carVisual);
 
         moveCar(carVisual);
+
+        checkEMS();
     }
 
     //remove car
@@ -1070,6 +1121,8 @@ public class GUIMain{
 
         streetPane.getChildren().remove(carVisual.getImageView());
         cars.remove(carVisual);
+
+        checkEMS();
     }
 
     //initial position
@@ -1278,6 +1331,28 @@ public class GUIMain{
         createCar(nextCarID, lane, bearing, laneNumber, EMS);
 
         nextCarID++;
+    }
+
+    //check all cars for ems
+    private void checkEMS() {
+
+        boolean emsPresent = false;
+
+        for (CarVisual carVisual : cars) {
+
+            if (carVisual.getCar().isEMS()) {
+                emsPresent = true;
+                break;
+            }
+        }
+
+        if (emsPresent) {
+            setEMSIndicator(true);
+        }
+
+        else {
+            setEMSIndicator(false);
+        }
     }
 
     //returns true if two cars are colliding

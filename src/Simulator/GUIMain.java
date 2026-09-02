@@ -756,7 +756,7 @@ public class GUIMain{
 
     private void createCar(int id, GUILane lane, Bearing bearing, int laneNumber) {
         //create the logic car
-        GUICar guiCar = new GUICar(id, lane, bearing);
+        GUICar guiCar = new GUICar(id, lane, bearing, laneNumber); //TODO will need to standardise laneNumber
 
         //create visual car
         String imagePath = carImages.get(random.nextInt(carImages.size()));

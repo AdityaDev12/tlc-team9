@@ -5,26 +5,28 @@ import java.util.ArrayList;
 public class GUILane {
     private int ID;
     private ArrayList<GUILight> myLights = new ArrayList<>();
-    private GUISensor mySensor;
+    private ArrayList<GUISensor> mySensors = new ArrayList<>();
+
 
     public GUILane(int ID) {
         this.ID = ID;
 
         makeLights();
+        makeSensors();
     }
 
     private void makeLights() {
-        LightShape shape = switch (laneNumber) {
-            case 0 -> LightShape.LeftArrow;
-            case 2 -> LightShape.RightArrow;
-            default -> LightShape.Circle;
-        };
-        myLights.add(new GUILight(0, shape, direction));
-        myLights.add(new GUILight(1, shape, direction));
-        myLights.add(new GUILight(2, shape, direction));
+        myLights = new ArrayList<>();
     }
-    public void makeSensor(GUISensor mySensor) {
-        this.mySensor = mySensor;
+    private void makeSensors() {
+        mySensors = new ArrayList<>();
+    }
+
+    public LightCol getLightCol(int laneID){
+        return myLights.get(laneID).getColor();
+    }
+    public void updateSensor(int ID, boolean isActive){
+        mySensors.get(ID).setActive(isActive);
     }
     public void updateLights(int LightID, LightCol Color){
         GUILight theLight = myLights.get(LightID);

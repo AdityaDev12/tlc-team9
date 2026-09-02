@@ -8,11 +8,11 @@ public class GUISensor {
         this.ID = ID;
     }
 
-    public void setActive(Boolean active)
-    {
+    public void setActive(Boolean active) {
         this.active = active;
     }
-    public boolean isActive() {
+
+    public boolean getStatus(){
         return active;
     }
 

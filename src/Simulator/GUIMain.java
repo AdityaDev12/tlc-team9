@@ -681,6 +681,9 @@ public class GUIMain{
         return arrow;
     }
 
+    private void drawPedLight(){
+        double width = 10;
+    }
 
     //traffic light
     private void drawTrafficLight(double x, double y, Bearing bearing) {

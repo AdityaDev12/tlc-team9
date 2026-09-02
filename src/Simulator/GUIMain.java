@@ -2,6 +2,8 @@ package Simulator;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.geometry.BoundingBox;
+import javafx.geometry.Bounds;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Group;
 import javafx.scene.Scene;
@@ -80,7 +82,7 @@ public class GUIMain{
     );
 
     //1 = low traffic, 10 = heavy traffic
-    private int traffic = 5;
+    private int traffic = 0; //traffic off by default
 
     private Timeline carSpawner;
     private int nextCarID = 0;
@@ -180,10 +182,12 @@ public class GUIMain{
 
         Label trafficLabel = new Label("Traffic");
 
-        Slider trafficSlider = new Slider(0, 10, 5);
+        Slider trafficSlider = new Slider(0, 10, traffic);
 
         Button spawnCarButton = new Button("Spawn Car");
         Button spawnEMSButton = new Button("Spawn EMS");
+
+        Button clearAllCars = new Button("Clear All Cars");
 
         trafficSlider.setShowTickLabels(true);
         trafficSlider.setShowTickMarks(true);
@@ -203,11 +207,18 @@ public class GUIMain{
             spawnCar(true);
         });
 
+        clearAllCars.setOnAction(event -> {
+            for(CarVisual car : new ArrayList<>(cars)) {
+                removeCar(car);
+            }
+        });
+
         controls.getChildren().addAll(
                 trafficLabel,
                 trafficSlider,
                 spawnCarButton,
-                spawnEMSButton
+                spawnEMSButton,
+                clearAllCars
         );
 
         controls.setLayoutX(20);
@@ -924,6 +935,14 @@ public class GUIMain{
                     break;
             }
 
+            CarVisual otherCar = isCollidingWithAnotherCar(carVisual);
+
+            if(otherCar != null) {
+                System.out.println("Collision!!!");
+                carVisual.getTimeline().stop();
+                otherCar.getTimeline().stop();
+            }
+
             if(isOutsideScreen(car, bearing)) {
                 removeCar(carVisual);
                 System.out.println("car has been removed.");
@@ -1003,6 +1022,84 @@ public class GUIMain{
         nextCarID++;
     }
 
+    //returns true if two cars are colliding
+    private boolean isColliding(CarVisual car1, CarVisual car2) {
+
+        Bounds bounds1 = car1.getImageView().getBoundsInParent();
+        Bounds bounds2 = car2.getImageView().getBoundsInParent();
+
+        double padding = 25;
+
+        Bounds smallerBounds1;
+        Bounds smallerBounds2;
+
+        Bearing bearing1 = car1.getCurrentBearing();
+        Bearing bearing2 = car2.getCurrentBearing();
+
+        //I cant get the hit boxes to be perfect so if anyone wants to
+        //tweak the values, that'll be great :)
+        if (bearing1 == Bearing.North || bearing1 == Bearing.South) {
+
+            smallerBounds1 = new BoundingBox(
+                    bounds1.getMinX() + padding,
+                    bounds1.getMinY() + 10,
+                    bounds1.getWidth() - padding * 2,
+                    bounds1.getHeight() - 10
+            );
+
+        }
+
+        else {
+
+            smallerBounds1 = new BoundingBox(
+                    bounds1.getMinX(),
+                    bounds1.getMinY() + padding,
+                    bounds1.getWidth() - 10,
+                    bounds1.getHeight() - padding * 2
+            );
+        }
+
+        if (bearing2 == Bearing.North || bearing2 == Bearing.South) {
+
+            smallerBounds2 = new BoundingBox(
+                    bounds2.getMinX() + padding,
+                    bounds2.getMinY() + 10,
+                    bounds2.getWidth() - padding * 2,
+                    bounds2.getHeight() - 10
+            );
+
+        }
+
+        else {
+
+            smallerBounds2 = new BoundingBox(
+                    bounds2.getMinX(),
+                    bounds2.getMinY() + padding,
+                    bounds2.getWidth() - 10,
+                    bounds2.getHeight() - padding * 2
+            );
+        }
+
+        return smallerBounds1.intersects(smallerBounds2);
+    }
+
+    //collision with a car
+    private CarVisual isCollidingWithAnotherCar(CarVisual car) {
+        for(CarVisual otherCar : cars) {
+            //don't check against itself
+            if(otherCar == car) {
+                continue;
+            }
+
+            if(isColliding(car, otherCar)) {
+                return otherCar;
+            }
+        }
+
+        //no collision
+        return null;
+    }
+
     //small private helper class to store traffic lights
     private record TrafficLightVisual(Circle redLight, Circle yellowLight, Circle greenLight) {
     }
@@ -1014,10 +1111,22 @@ public class GUIMain{
         private final double speed;
         private Timeline timeline;
 
+        private Bearing currentBearing;
+
         public CarVisual(GUICar car, ImageView imageView, double speed) {
             this.car = car;
             this.imageView = imageView;
             this.speed = speed;
+
+            this.currentBearing = car.getBearing();
+        }
+
+        public Bearing getCurrentBearing() {
+            return currentBearing;
+        }
+
+        public void setCurrentBearing(Bearing currentBearing) {
+            this.currentBearing = currentBearing;
         }
 
         public GUICar getCar() {

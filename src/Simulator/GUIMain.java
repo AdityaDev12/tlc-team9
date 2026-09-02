@@ -720,9 +720,7 @@ public class GUIMain{
         inner.setArcWidth(inner.getWidth()*.8);
 
         streetPane.getChildren().addAll(housing, inner, timer);
-
-        //store traffic lights to change them later
-        trafficLights.add(new TrafficLightVisual(redLight, yellowLight, greenLight));
+        pedLights.add(new PedLightVisual(timer));
     }
 
     //traffic light

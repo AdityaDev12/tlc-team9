@@ -1,9 +1,4 @@
-package Protocol;
-
-import java.util.ArrayList;
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
+package Communication;
 
 /**
  * Inbound half of your responsibility: raw socket line -> parsed message ->
@@ -15,6 +10,7 @@ import java.util.Map;
  * a matching message arrives. Neither side needs to know about the socket,
  * and the animation code never touches raw strings.
  */
+/*
 public class InstructionReceiver {
 
     private final Map<TLCCommand, List<CommandHandler>> handlers = new EnumMap<>(TLCCommand.class);
@@ -23,7 +19,7 @@ public class InstructionReceiver {
         channel.setLineListener(this::onRawLine);
     }
 
-    /** Registers a handler to run whenever a message of this command type arrives. */
+    // Registers a handler to run whenever a message of this command type arrives.
     public void subscribe(TLCCommand command, CommandHandler handler) {
         handlers.computeIfAbsent(command, c -> new ArrayList<>()).add(handler);
     }
@@ -48,3 +44,4 @@ public class InstructionReceiver {
         }
     }
 }
+*/

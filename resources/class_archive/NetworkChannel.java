@@ -1,12 +1,12 @@
-package Protocol;
+package Communication;
 
-
+/*
 public interface NetworkChannel {
 
-    /** Sends one already-formatted wire-format line out over the socket. */
+    // Sends one already-formatted wire-format line out over the socket.
     void sendLine(String line);
 
-    /** Registers the callback invoked once per line received from the socket. */
+    // Registers the callback invoked once per line received from the socket.
     void setLineListener(LineListener listener);
 
     @FunctionalInterface
@@ -14,3 +14,4 @@ public interface NetworkChannel {
         void onLine(String rawLine);
     }
 }
+*/

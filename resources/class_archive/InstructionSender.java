@@ -1,4 +1,4 @@
-package Protocol;
+package Communication;
 
 /**
  * Outbound half of your responsibility: GUI/simulator event -> wire message.
@@ -9,6 +9,7 @@ package Protocol;
  * methods directly instead of ever building raw strings themselves that
  * keeps the wire format in exactly one place (InstructionMessage).
  */
+/*
 public class InstructionSender {
 
     private final NetworkChannel channel;
@@ -41,3 +42,4 @@ public class InstructionSender {
         channel.sendLine(message.toWireFormat());
     }
 }
+*/

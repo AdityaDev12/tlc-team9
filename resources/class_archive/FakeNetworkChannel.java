@@ -1,7 +1,4 @@
-package Protocol;
-
-import java.util.ArrayList;
-import java.util.List;
+package Communication;
 
 /**
  * A stand-in NetworkChannel for local testing, before the real Harness
@@ -12,6 +9,7 @@ import java.util.List;
  * Delete or ignore this once the real socket class exists, nothing else
  * in this package depends on it.
  */
+/*
 public class FakeNetworkChannel implements NetworkChannel {
 
     private final List<String> sentLines = new ArrayList<>();
@@ -28,7 +26,7 @@ public class FakeNetworkChannel implements NetworkChannel {
         this.listener = listener;
     }
 
-    /** Test helper: pretend this line just arrived from the server. */
+    // Test helper: pretend this line just arrived from the server.
     public void simulateIncoming(String rawLine) {
         if (listener != null) {
             listener.onLine(rawLine);
@@ -39,3 +37,4 @@ public class FakeNetworkChannel implements NetworkChannel {
         return sentLines;
     }
 }
+*/

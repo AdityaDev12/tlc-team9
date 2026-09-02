@@ -1,6 +1,4 @@
-package Protocol;
-
-import javafx.application.Platform;
+package Communication;
 
 /**
  * Example wiring class — this is the piece that actually connects the
@@ -17,6 +15,7 @@ import javafx.application.Platform;
  * this, the app throws "Not on FX application thread" as soon as a real
  * message arrives from the real socket.
  */
+/*
 public class GUIControllerBridge {
 
     public GUIControllerBridge(InstructionReceiver receiver,
@@ -42,7 +41,7 @@ public class GUIControllerBridge {
      * Placeholder for teammate #3's real JavaFX drawing/animation class.
      * Ask them to implement this (or adapt these method names to match
      * whatever they actually expose) — your code only needs the interface.
-     */
+
     public interface TrafficLightAnimationController {
         void setLightState(String laneOrDirectionId, String state);   // state: RED/YELLOW/GREEN
         void setPedestrianSignal(String crossingId, String state);    // state: WALK/WAIT
@@ -50,3 +49,4 @@ public class GUIControllerBridge {
         void resumeNormalOperation();
     }
 }
+*/

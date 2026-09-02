@@ -1,4 +1,4 @@
-package Protocol;
+package Communication;
 
 /**
  * Standalone demo of the instruction layer, using FakeNetworkChannel instead
@@ -12,6 +12,8 @@ package Protocol;
  *   javac tlc/protocol/*.java -d out
  *   java -cp out tlc.protocol.TLCDemo
  */
+
+/*
 public class TLCDemo {
 
     public static void main(String[] args) {
@@ -49,3 +51,4 @@ public class TLCDemo {
         System.out.println("\nDone. " + channel.getSentLines().size() + " outbound message(s) were sent.");
     }
 }
+*/

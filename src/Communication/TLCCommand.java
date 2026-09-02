@@ -1,4 +1,4 @@
-package Protocol;
+package Communication;
 
 /**
  * Every valid command type in the TLC instruction protocol.

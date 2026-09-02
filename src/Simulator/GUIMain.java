@@ -177,12 +177,12 @@ public class GUIMain{
         }
 
 
-        double x = intersectionLeft + (1 * LANE_WIDTH) + (ROAD_WIDTH / 2);
-        double y = intersectionBottom + LINE_LENGTH - (STOPLINE_WIDTH * 3) + CROSSWALK_OFFSET;
+        double x = intersectionLeft - 25;
+        double y = intersectionBottom + 2*CROSSWALK_HEIGHT;
         drawPedLight(x, y, Bearing.North);
 
-        x = intersectionLeft + (2 * LANE_WIDTH);
-        y = intersectionTop - LINE_LENGTH + STOPLINE_WIDTH;
+        x = intersectionLeft -25;
+        y = intersectionTop - 3*CROSSWALK_HEIGHT;
         drawPedLight(x, y, Bearing.South);
 
         x = intersectionRight + LINE_LENGTH - (STOPLINE_WIDTH * 3) + CROSSWALK_OFFSET;

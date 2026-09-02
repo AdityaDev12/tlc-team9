@@ -718,6 +718,11 @@ public class GUIMain{
         inner.setFill(Color.GRAY);
         inner.setArcHeight(inner.getHeight()*.8);
         inner.setArcWidth(inner.getWidth()*.8);
+
+        streetPane.getChildren().addAll(housing, inner, timer);
+
+        //store traffic lights to change them later
+        trafficLights.add(new TrafficLightVisual(redLight, yellowLight, greenLight));
     }
 
     //traffic light

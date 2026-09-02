@@ -18,6 +18,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.*;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -66,6 +67,8 @@ public class GUIMain{
 
     //store traffic light visuals
     private final ArrayList<TrafficLightVisual> trafficLights = new ArrayList<>();
+    private final ArrayList<PedLightVisual> pedLights = new ArrayList<>();
+
 
     //store all cars in the simulation
     private final ArrayList<CarVisual> cars = new ArrayList<>();
@@ -175,6 +178,37 @@ public class GUIMain{
 
             drawTrafficLight(x, y, Bearing.East);
         }
+
+
+        double x = intersectionLeft - 25;
+        double y = intersectionBottom + 2*CROSSWALK_HEIGHT;
+        drawPedLight(x, y, Bearing.West);
+        x = intersectionLeft - 3*CROSSWALK_HEIGHT;
+        y = intersectionBottom;
+        drawPedLight(x, y, Bearing.South);
+
+        x = intersectionLeft -25;
+        y = intersectionTop - 3*CROSSWALK_HEIGHT;
+        drawPedLight(x, y, Bearing.West);
+        x = intersectionLeft - 3*CROSSWALK_HEIGHT;
+        y = intersectionTop - 25;
+        drawPedLight(x, y, Bearing.North);
+
+        x = intersectionRight;
+        y = intersectionTop - 3*CROSSWALK_HEIGHT;
+        drawPedLight(x, y, Bearing.East);
+        x = intersectionRight + 2*CROSSWALK_HEIGHT;
+        y = intersectionTop - 25;
+        drawPedLight(x, y, Bearing.North);
+
+        x = intersectionRight + 2*CROSSWALK_HEIGHT;
+        y = intersectionBottom ;
+        drawPedLight(x, y, Bearing.South);
+        x = intersectionRight;
+        y = intersectionBottom +2*CROSSWALK_HEIGHT ;
+        drawPedLight(x, y, Bearing.East);
+
+
         drawArrowMarkings();
 
         startCarSpawner();
@@ -736,6 +770,50 @@ public class GUIMain{
         return arrow;
     }
 
+    private void drawPedLight(double x, double y, Bearing bearing){
+        double width = 25;
+        Rectangle housing;
+        Rectangle inner;
+        Rectangle button = new Rectangle(width/2, width/2, width/2, width/2);
+        Text timer;
+
+        housing = new Rectangle(x , y, width, width);
+        housing.setArcWidth(housing.getWidth() * 0.8);
+        housing.setArcHeight(housing.getHeight() * 0.8);
+        housing.setFill(Color.DARKGRAY);
+
+        inner = new Rectangle(x + width*.15 , y + width*.15, width*.7, width*.7);
+        inner.setFill(Color.GRAY);
+        inner.setArcHeight(inner.getHeight()*.8);
+        inner.setArcWidth(inner.getWidth()*.8);
+
+        timer = new Text(x + width*.25, y + width*.65, "0");
+        timer.setFont(Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 10));
+
+        timer.setTextAlignment(TextAlignment.CENTER);
+        timer.setStrokeWidth(1.5);
+        timer.setFill(Color.ORANGERED);
+
+        if(bearing == Bearing.North){
+            button = new Rectangle(x+ width*.35,y-width*.1,width*.35,width*.1);
+            button.setFill(Color.BLACK);
+        }
+        if(bearing == Bearing.West){
+            button = new Rectangle(x- width*.1,y+width*.35,width*.1,width*.35);
+            button.setFill(Color.BLACK);
+        }
+        if(bearing == Bearing.East){
+            button = new Rectangle(x + width*.9,y+width*.35,width*.1,width*.35);
+            button.setFill(Color.BLACK);
+        }
+        if(bearing == Bearing.South){
+            button = new Rectangle(x+ width*.3,y+width*.9,width*.35,width*.1);
+            button.setFill(Color.BLACK);
+        }
+
+        streetPane.getChildren().addAll(housing, inner, timer, button);
+        pedLights.add(new PedLightVisual(timer));
+    }
 
     //traffic light
     private void drawTrafficLight(double x, double y, Bearing bearing) {
@@ -1226,6 +1304,7 @@ public class GUIMain{
             this.currentColor = currentColor;
         }
     }
+    private record PedLightVisual (Text timer) {}
 
     //small private helper class to store car visuals
     private static class CarVisual {

@@ -179,28 +179,28 @@ public class GUIMain{
 
         double x = intersectionLeft - 25;
         double y = intersectionBottom + 2*CROSSWALK_HEIGHT;
-        drawPedLight(x, y, Bearing.North);
+        drawPedLight(x, y, Bearing.West);
         x = intersectionLeft - 3*CROSSWALK_HEIGHT;
         y = intersectionBottom;
-        drawPedLight(x, y, Bearing.North);
+        drawPedLight(x, y, Bearing.South);
 
         x = intersectionLeft -25;
         y = intersectionTop - 3*CROSSWALK_HEIGHT;
-        drawPedLight(x, y, Bearing.South);
+        drawPedLight(x, y, Bearing.West);
         x = intersectionLeft - 3*CROSSWALK_HEIGHT;
         y = intersectionTop - 25;
-        drawPedLight(x, y, Bearing.South);
+        drawPedLight(x, y, Bearing.North);
 
         x = intersectionRight;
         y = intersectionTop - 3*CROSSWALK_HEIGHT;
-        drawPedLight(x, y, Bearing.West);
+        drawPedLight(x, y, Bearing.East);
         x = intersectionRight + 2*CROSSWALK_HEIGHT;
         y = intersectionTop - 25;
-        drawPedLight(x, y, Bearing.West);
+        drawPedLight(x, y, Bearing.North);
 
         x = intersectionRight + 2*CROSSWALK_HEIGHT;
         y = intersectionBottom ;
-        drawPedLight(x, y, Bearing.East);
+        drawPedLight(x, y, Bearing.South);
         x = intersectionRight;
         y = intersectionBottom +2*CROSSWALK_HEIGHT ;
         drawPedLight(x, y, Bearing.East);
@@ -719,6 +719,7 @@ public class GUIMain{
         double width = 25;
         Rectangle housing;
         Rectangle inner;
+        Rectangle button = new Rectangle(width/2, width/2, width/2, width/2);
         Text timer;
 
         housing = new Rectangle(x , y, width, width);
@@ -738,7 +739,24 @@ public class GUIMain{
         timer.setStrokeWidth(1.5);
         timer.setFill(Color.ORANGERED);
 
-        streetPane.getChildren().addAll(housing, inner, timer);
+        if(bearing == Bearing.North){
+            button = new Rectangle(x+ width*.35,y-width*.1,width*.35,width*.1);
+            button.setFill(Color.BLACK);
+        }
+        if(bearing == Bearing.West){
+            button = new Rectangle(x- width*.1,y+width*.35,width*.1,width*.35);
+            button.setFill(Color.BLACK);
+        }
+        if(bearing == Bearing.East){
+            button = new Rectangle(x + width*.9,y+width*.35,width*.1,width*.35);
+            button.setFill(Color.BLACK);
+        }
+        if(bearing == Bearing.South){
+            button = new Rectangle(x+ width*.3,y+width*.9,width*.35,width*.1);
+            button.setFill(Color.BLACK);
+        }
+
+        streetPane.getChildren().addAll(housing, inner, timer, button);
         pedLights.add(new PedLightVisual(timer));
     }
 

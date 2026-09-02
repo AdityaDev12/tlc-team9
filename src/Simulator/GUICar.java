@@ -13,18 +13,25 @@ public class GUICar {
 
     private boolean sensorActive = false;
 
+    private boolean isEMS;
 
-    public GUICar(int ID, GUILane myLane, Bearing myBearing, int laneID, GUIIntersection intersection) {
+
+    public GUICar(int ID, GUILane myLane, Bearing myBearing, int laneID, GUIIntersection intersection, boolean isEMS) {
         this.ID = ID;
         this.myLane = myLane;
         this.myBearing = myBearing;
         this.distance = 0;
         this.laneID = laneID;
         this.intersection = intersection;
+        this.isEMS = isEMS;
     }
 
     public boolean canMove() {
         return allowedToMove;
+    }
+
+    public boolean isEMS() {
+        return isEMS;
     }
 
     public void setCanMove(boolean allowedToMove) {

@@ -10,6 +10,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
@@ -178,6 +179,8 @@ public class GUIMain{
 
             drawTrafficLight(x, y, Bearing.East);
         }
+
+        drawSensors();
 
 
         double x = intersectionLeft - 25;
@@ -772,6 +775,77 @@ public class GUIMain{
         );
 
         return arrow;
+    }
+
+    private void drawSensors() {
+
+        double intersectionLeft = (WINDOW_WIDTH - ROAD_WIDTH) / 2;
+        double intersectionRight = (WINDOW_HEIGHT - ROAD_WIDTH) / 2;
+
+        double sensorRadius = 3;
+
+        //distance from the intersection center
+        double sensorOffset1 = 120;
+        double sensorOffset2 = 200;
+        double sensorOffset3 = 280;
+
+        for (int lane = 0; lane < LANES_PER_DIRECTION; lane++) {
+
+            //north
+            double northX = intersectionLeft + ROAD_WIDTH / 2
+                    + (LANES_PER_DIRECTION - 1 - lane) * LANE_WIDTH
+                    + LANE_WIDTH / 2.0;
+
+            drawSensor(northX, intersectionRight + ROAD_WIDTH + sensorOffset1, sensorRadius);
+            drawSensor(northX, intersectionRight + ROAD_WIDTH + sensorOffset2, sensorRadius);
+            drawSensor(northX, intersectionRight + ROAD_WIDTH + sensorOffset3, sensorRadius);
+
+
+            //south
+            double southX = intersectionLeft - ROAD_WIDTH / 2
+                    + (LANES_PER_DIRECTION + lane) * LANE_WIDTH
+                    + LANE_WIDTH / 2.0;
+
+            drawSensor(southX, intersectionRight - sensorOffset1, sensorRadius);
+            drawSensor(southX, intersectionRight - sensorOffset2, sensorRadius);
+            drawSensor(southX, intersectionRight - sensorOffset3, sensorRadius);
+
+            //east
+            double eastY = intersectionRight + ROAD_WIDTH / 2
+                    + (LANES_PER_DIRECTION - 1 - lane) * LANE_WIDTH
+                    + LANE_WIDTH / 2.0;
+
+            drawSensor(intersectionLeft - sensorOffset1, eastY, sensorRadius);
+            drawSensor(intersectionLeft - sensorOffset2, eastY, sensorRadius);
+            drawSensor(intersectionLeft - sensorOffset3, eastY, sensorRadius);
+
+
+            //west
+            double westY = intersectionRight - ROAD_WIDTH / 2
+                    + (LANES_PER_DIRECTION + lane) * LANE_WIDTH
+                    + LANE_WIDTH / 2.0;
+
+            drawSensor(intersectionLeft + ROAD_WIDTH + sensorOffset1, westY, sensorRadius);
+            drawSensor(intersectionLeft + ROAD_WIDTH + sensorOffset2, westY, sensorRadius);
+            drawSensor(intersectionLeft + ROAD_WIDTH + sensorOffset3, westY, sensorRadius);
+
+        }
+    }
+
+    private void drawSensor(double x, double y, double radius) {
+
+        Circle sensor = new Circle(x, y, radius, Color.LIMEGREEN);
+
+        //glow
+        DropShadow glow = new DropShadow();
+
+        glow.setColor(Color.LIMEGREEN);
+        glow.setRadius(10);
+        glow.setSpread(0.5);
+
+        sensor.setEffect(glow);
+
+        streetPane.getChildren().add(sensor);
     }
 
     private void drawPedLight(double x, double y, Bearing bearing){

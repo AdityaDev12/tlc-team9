@@ -10,7 +10,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
-import javafx.scene.effect.Light;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
@@ -23,7 +23,12 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
-import java.util.*;
+import javax.print.attribute.standard.MediaSize;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+import java.util.Random;
 
 /*
 creates all javafx visuals and animations
@@ -61,9 +66,8 @@ public class GUIMain{
     private final ArrayList<GUILane> LaneList = new ArrayList<>();
     private final ArrayList<GUICar> CarList = new ArrayList<>();
 
-    //store traffic light visuals with four directional groups
-    private final Map<Bearing, ArrayList<TrafficLightVisual>> trafficLights = new EnumMap<>(Bearing.class);
-//    private final ArrayList<TrafficLightVisual> trafficLights = new ArrayList<>();
+    //store traffic light visuals
+    private final ArrayList<TrafficLightVisual> trafficLights = new ArrayList<>();
     private final ArrayList<PedLightVisual> pedLights = new ArrayList<>();
 
 
@@ -100,11 +104,6 @@ public class GUIMain{
 
         WINDOW_WIDTH = screenBounds.getWidth();
         WINDOW_HEIGHT = screenBounds.getHeight();
-
-        trafficLights.put(Bearing.North, new ArrayList<>());
-        trafficLights.put(Bearing.South, new ArrayList<>());
-        trafficLights.put(Bearing.East, new ArrayList<>());
-        trafficLights.put(Bearing.West, new ArrayList<>());
     }
 
     public void makeGUI() {
@@ -180,6 +179,8 @@ public class GUIMain{
 
             drawTrafficLight(x, y, Bearing.East);
         }
+
+        drawSensors();
 
 
         double x = intersectionLeft - 25;
@@ -285,6 +286,10 @@ public class GUIMain{
         for (int lane = 0; lane < LANES_PER_DIRECTION; lane++) {
             LaneList.add(new GUILane(lane + 9, Bearing.West));
         }
+/*
+        for (GUILane lane : LaneList) {
+            lane.updateLights(0, LightCol.Green);
+        }*/
     }
 
     //returns the lane
@@ -772,6 +777,77 @@ public class GUIMain{
         return arrow;
     }
 
+    private void drawSensors() {
+
+        double intersectionLeft = (WINDOW_WIDTH - ROAD_WIDTH) / 2;
+        double intersectionRight = (WINDOW_HEIGHT - ROAD_WIDTH) / 2;
+
+        double sensorRadius = 3;
+
+        //distance from the intersection center
+        double sensorOffset1 = 120;
+        double sensorOffset2 = 200;
+        double sensorOffset3 = 280;
+
+        for (int lane = 0; lane < LANES_PER_DIRECTION; lane++) {
+
+            //north
+            double northX = intersectionLeft + ROAD_WIDTH / 2
+                    + (LANES_PER_DIRECTION - 1 - lane) * LANE_WIDTH
+                    + LANE_WIDTH / 2.0;
+
+            drawSensor(northX, intersectionRight + ROAD_WIDTH + sensorOffset1, sensorRadius);
+            drawSensor(northX, intersectionRight + ROAD_WIDTH + sensorOffset2, sensorRadius);
+            drawSensor(northX, intersectionRight + ROAD_WIDTH + sensorOffset3, sensorRadius);
+
+
+            //south
+            double southX = intersectionLeft - ROAD_WIDTH / 2
+                    + (LANES_PER_DIRECTION + lane) * LANE_WIDTH
+                    + LANE_WIDTH / 2.0;
+
+            drawSensor(southX, intersectionRight - sensorOffset1, sensorRadius);
+            drawSensor(southX, intersectionRight - sensorOffset2, sensorRadius);
+            drawSensor(southX, intersectionRight - sensorOffset3, sensorRadius);
+
+            //east
+            double eastY = intersectionRight + ROAD_WIDTH / 2
+                    + (LANES_PER_DIRECTION - 1 - lane) * LANE_WIDTH
+                    + LANE_WIDTH / 2.0;
+
+            drawSensor(intersectionLeft - sensorOffset1, eastY, sensorRadius);
+            drawSensor(intersectionLeft - sensorOffset2, eastY, sensorRadius);
+            drawSensor(intersectionLeft - sensorOffset3, eastY, sensorRadius);
+
+
+            //west
+            double westY = intersectionRight - ROAD_WIDTH / 2
+                    + (LANES_PER_DIRECTION + lane) * LANE_WIDTH
+                    + LANE_WIDTH / 2.0;
+
+            drawSensor(intersectionLeft + ROAD_WIDTH + sensorOffset1, westY, sensorRadius);
+            drawSensor(intersectionLeft + ROAD_WIDTH + sensorOffset2, westY, sensorRadius);
+            drawSensor(intersectionLeft + ROAD_WIDTH + sensorOffset3, westY, sensorRadius);
+
+        }
+    }
+
+    private void drawSensor(double x, double y, double radius) {
+
+        Circle sensor = new Circle(x, y, radius, Color.LIMEGREEN);
+
+        //glow
+        DropShadow glow = new DropShadow();
+
+        glow.setColor(Color.LIMEGREEN);
+        glow.setRadius(10);
+        glow.setSpread(0.5);
+
+        sensor.setEffect(glow);
+
+        streetPane.getChildren().add(sensor);
+    }
+
     private void drawPedLight(double x, double y, Bearing bearing){
         double width = 25;
         Rectangle housing;
@@ -906,8 +982,7 @@ public class GUIMain{
         streetPane.getChildren().addAll(housing, redLight, yellowLight, greenLight);
 
         //store traffic lights to change them later
-        trafficLights.get(bearing).add(new TrafficLightVisual(redLight, yellowLight, greenLight));
-        //trafficLights.add(new TrafficLightVisual(redLight, yellowLight, greenLight));
+        trafficLights.add(new TrafficLightVisual(redLight, yellowLight, greenLight));
 
     }
 
@@ -917,26 +992,13 @@ public class GUIMain{
     }
 
     //change traffic light colors
-    public void changeTrafficLight(int lightID, LightCol color, LightShape shape, Bearing direction) {
+    public void changeTrafficLight(int lightID, LightCol color) {
         //inactiveColors
         Color inactiveRed = Color.rgb(80, 20, 20);
         Color inactiveYellow = Color.rgb(80, 70, 20);
         Color inactiveGreen = Color.rgb(20, 70, 30);
 
-        // Find group of lights in this direction
-        ArrayList<TrafficLightVisual> directionalLights = trafficLights.get(direction);
-        if (directionalLights == null) {
-            System.err.println("ERROR[GUIMain]: No lights found for direction: " + direction);
-            return;
-        }
-        // Find specific light in that direction
-        if (lightID < 0 || lightID >= directionalLights.size()) {
-            System.err.println("ERROR[GUIMain]: Invalid light ID " + lightID + " for direction " + direction);
-            return;
-        }
-
-        TrafficLightVisual light = directionalLights.get(lightID);
-        //TrafficLightVisual light = trafficLights.get(lightID);
+        TrafficLightVisual light = trafficLights.get(lightID);
 
         //turn off all lights
         light.redLight.setFill(inactiveRed);
@@ -991,7 +1053,7 @@ public class GUIMain{
         double speed = MIN_CAR_SPEED + random.nextDouble() * (MAX_CAR_SPEED - MIN_CAR_SPEED);
 
         //connect logic car with visual
-        CarVisual carVisual = new CarVisual(guiCar, car, speed);
+        CarVisual carVisual = new CarVisual(guiCar, car, speed, laneNumber);
 
         //store car
         cars.add(carVisual);
@@ -1072,7 +1134,7 @@ public class GUIMain{
             if (!carVisual.getCar().canMove()) {
 
                 if (isAtStopLine(carVisual)) {
-                    return;
+                    carVisual.setSpeed(0);
                 }
             }
 
@@ -1326,15 +1388,19 @@ public class GUIMain{
     private static class CarVisual {
         private final GUICar car;
         private final ImageView imageView;
-        private final double speed;
+        private double speed;
+        private double originalSpeed;
         private Timeline timeline;
+        private int laneNumber;
 
         private Bearing currentBearing;
 
-        public CarVisual(GUICar car, ImageView imageView, double speed) {
+        public CarVisual(GUICar car, ImageView imageView, double speed, int laneNumber) {
             this.car = car;
             this.imageView = imageView;
             this.speed = speed;
+            this.originalSpeed = speed;
+            this.laneNumber = laneNumber;
 
             this.currentBearing = car.getBearing();
         }
@@ -1355,6 +1421,14 @@ public class GUIMain{
             return speed;
         }
 
+        public void setSpeed(double speed) {
+            this.speed = speed;
+        }
+
+        public double getOriginalSpeed() {
+            return originalSpeed;
+        }
+
         public ImageView getImageView() {
             return imageView;
         }
@@ -1365,6 +1439,10 @@ public class GUIMain{
 
         public void setTimeline(Timeline timeline) {
             this.timeline = timeline;
+        }
+
+        public int getLaneNumber() {
+            return laneNumber;
         }
     }
 }

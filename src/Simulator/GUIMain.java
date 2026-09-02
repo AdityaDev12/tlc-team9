@@ -704,7 +704,7 @@ public class GUIMain{
     }
 
     private void drawPedLight(double x, double y, Bearing bearing){
-        double width = 10;
+        double width = 25;
         Rectangle housing;
         Rectangle inner;
         Text timer;
@@ -714,7 +714,7 @@ public class GUIMain{
         housing.setArcHeight(housing.getHeight() * 0.8);
         housing.setFill(Color.DARKGRAY);
 
-        inner = new Rectangle(x , y, width*.7, width*.7);
+        inner = new Rectangle(x + width*.15 , y + width*.15, width*.7, width*.7);
         inner.setFill(Color.GRAY);
         inner.setArcHeight(inner.getHeight()*.8);
         inner.setArcWidth(inner.getWidth()*.8);

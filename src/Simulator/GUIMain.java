@@ -1061,7 +1061,6 @@ public class GUIMain{
             System.err.println("ERROR[GUIMain]: Invalid light ID " + lightID + " for direction " + direction);
             return;
         }
-
         TrafficLightVisual light = directionalLights.get(lightID);
 
         //update simulation logic
@@ -1074,7 +1073,7 @@ public class GUIMain{
                 break;
 
             case South:
-                laneID = lightID + 3;
+                laneID = 5 - lightID;
                 break;
 
             case East:
@@ -1082,7 +1081,7 @@ public class GUIMain{
                 break;
 
             case West:
-                laneID = lightID + 9;
+                laneID = 11 - lightID;
                 break;
 
             default:

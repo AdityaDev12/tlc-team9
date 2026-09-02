@@ -10,6 +10,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
+import javafx.scene.effect.Light;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
@@ -134,6 +135,8 @@ public class GUIMain{
         drawRoad(WINDOW_WIDTH, WINDOW_HEIGHT, true);
         drawRoad(WINDOW_HEIGHT, WINDOW_WIDTH, false);
 
+        createLanes();
+
         drawHorizontalLanes();
         drawVerticalLanes();
 
@@ -226,6 +229,58 @@ public class GUIMain{
 
         streetPane.getChildren().add(controls);
 
+    }
+
+    //logic lanes
+    private void createLanes() {
+        for (int lane = 0; lane < LANES_PER_DIRECTION; lane++) {
+            LaneList.add(new GUILane(lane, Bearing.North));
+        }
+
+
+        for (int lane = 0; lane < LANES_PER_DIRECTION; lane++) {
+            LaneList.add(new GUILane(lane + 3, Bearing.South));
+        }
+
+        for (int lane = 0; lane < LANES_PER_DIRECTION; lane++) {
+            LaneList.add(new GUILane(lane + 6, Bearing.East));
+        }
+
+        for (int lane = 0; lane < LANES_PER_DIRECTION; lane++) {
+            LaneList.add(new GUILane(lane + 9, Bearing.West));
+        }
+    }
+
+    //returns the lane
+    private GUILane getLane(Bearing bearing, int laneNumber) {
+
+        int directionIndex;
+
+        switch (bearing) {
+
+            case North:
+                directionIndex = 0;
+                break;
+
+            case South:
+                directionIndex = 1;
+                break;
+
+            case East:
+                directionIndex = 2;
+                break;
+
+            case West:
+                directionIndex = 3;
+                break;
+
+            default:
+                return null;
+        }
+
+        int laneIndex = directionIndex * LANES_PER_DIRECTION + laneNumber;
+
+        return LaneList.get(laneIndex);
     }
 
     //draw road
@@ -808,6 +863,9 @@ public class GUIMain{
                 light.greenLight.setFill(Color.GREEN);
                 break;
         }
+
+        //store logic state
+        light.setCurrentColor(color);
     }
 
     private void createCar(int id, GUILane lane, Bearing bearing, int laneNumber, boolean EMS) {
@@ -912,9 +970,18 @@ public class GUIMain{
     private void moveCar(CarVisual carVisual) {
 
         ImageView car = carVisual.imageView;
-        Bearing bearing = carVisual.car.getBearing();
 
         Timeline timeline = new Timeline(new KeyFrame(Duration.millis(16), event -> {
+            Bearing bearing = carVisual.car.getBearing();
+
+            //stop at the stop line when the car is not allowed to move
+            if (!carVisual.getCar().canMove()) {
+
+                if (isAtStopLine(carVisual)) {
+                    return;
+                }
+            }
+
             double speed = carVisual.getSpeed(); //pixels per frame
 
             switch(bearing) {
@@ -934,6 +1001,8 @@ public class GUIMain{
                     car.setX(car.getX() - speed);
                     break;
             }
+
+            carVisual.getCar().addDistance(speed);
 
             CarVisual otherCar = isCollidingWithAnotherCar(carVisual);
 
@@ -955,6 +1024,39 @@ public class GUIMain{
         carVisual.setTimeline(timeline);
 
         timeline.play();
+    }
+
+    // Returns true if the car is at the stop line
+    private boolean isAtStopLine(CarVisual carVisual) {
+
+        ImageView car = carVisual.getImageView();
+
+        Bearing bearing = carVisual.getCurrentBearing();
+
+        double intersectionLeft = (WINDOW_WIDTH - ROAD_WIDTH) / 2.0;
+        double intersectionRight = intersectionLeft + ROAD_WIDTH;
+
+        double intersectionTop = (WINDOW_HEIGHT - ROAD_WIDTH) / 2.0;
+        double intersectionBottom = intersectionTop + ROAD_WIDTH;
+
+        double stopDistance = CROSSWALK_WIDTH + CROSSWALK_OFFSET + STOPLINE_WIDTH * 2;
+
+        switch (bearing) {
+
+            case North:
+                return car.getY() <= intersectionBottom + stopDistance;
+
+            case South:
+                return car.getY() + car.getFitHeight() >= intersectionTop - stopDistance;
+
+            case East:
+                return car.getX() + car.getFitWidth() >= intersectionLeft - stopDistance;
+
+            case West:
+                return car.getX() <= intersectionRight + stopDistance;
+        }
+
+        return false;
     }
 
     //returns true if a car is outside the screen
@@ -1015,7 +1117,7 @@ public class GUIMain{
         //0, 1, or 2
         int laneNumber = random.nextInt(LANES_PER_DIRECTION);
 
-        GUILane lane = null; //null for now
+        GUILane lane = getLane(bearing, laneNumber);
 
         createCar(nextCarID, lane, bearing, laneNumber, EMS);
 
@@ -1101,7 +1203,28 @@ public class GUIMain{
     }
 
     //small private helper class to store traffic lights
-    private record TrafficLightVisual(Circle redLight, Circle yellowLight, Circle greenLight) {
+    private static class TrafficLightVisual {
+        private final Circle redLight;
+        private final Circle yellowLight;
+        private final Circle greenLight;
+
+        private LightCol currentColor;
+
+        public TrafficLightVisual(Circle redLight, Circle yellowLight, Circle greenLight) {
+            this.redLight = redLight;
+            this.yellowLight = yellowLight;
+            this.greenLight = greenLight;
+
+            currentColor = LightCol.Red;
+        }
+
+        public LightCol getCurrentColor() {
+            return currentColor;
+        }
+
+        public void setCurrentColor(LightCol currentColor) {
+            this.currentColor = currentColor;
+        }
     }
 
     //small private helper class to store car visuals

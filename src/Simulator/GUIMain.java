@@ -188,9 +188,15 @@ public class GUIMain{
         x = intersectionRight;
         y = intersectionTop - 3*CROSSWALK_HEIGHT;
         drawPedLight(x, y, Bearing.West);
+        x = intersectionRight + 2*CROSSWALK_HEIGHT;
+        y = intersectionTop - 25;
+        drawPedLight(x, y, Bearing.West);
 
-        x = intersectionLeft - 25;
-        y = intersectionTop - 3*CROSSWALK_HEIGHT;
+        x = intersectionRight + 2*CROSSWALK_HEIGHT;
+        y = intersectionBottom ;
+        drawPedLight(x, y, Bearing.East);
+        x = intersectionRight;
+        y = intersectionBottom +2*CROSSWALK_HEIGHT ;
         drawPedLight(x, y, Bearing.East);
 
 

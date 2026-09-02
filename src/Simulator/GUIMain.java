@@ -5,6 +5,9 @@ import javafx.animation.Timeline;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Group;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.Slider;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
@@ -67,7 +70,6 @@ public class GUIMain{
     //list of car images
     private final List<String> carImages = List.of(
             "/Audi.png",
-            "/Ambulance.png",
             "/Black_viper.png",
             "/Car.png",
             "/Mini_truck.png",
@@ -106,6 +108,7 @@ public class GUIMain{
         streetPane.setPrefSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 
         createIntersection();
+        makeControls();
 
 
         BorderPane root = new BorderPane();
@@ -170,6 +173,48 @@ public class GUIMain{
         drawArrowMarkings();
 
         startCarSpawner();
+    }
+
+    private void makeControls() {
+        HBox controls = new HBox(5);
+
+        Label trafficLabel = new Label("Traffic");
+
+        Slider trafficSlider = new Slider(0, 10, 5);
+
+        Button spawnCarButton = new Button("Spawn Car");
+        Button spawnEMSButton = new Button("Spawn EMS");
+
+        trafficSlider.setShowTickLabels(true);
+        trafficSlider.setShowTickMarks(true);
+        trafficSlider.setMajorTickUnit(1);
+        trafficSlider.setMinorTickCount(0);
+        trafficSlider.setSnapToTicks(true);
+
+        trafficSlider.valueProperty().addListener((obs, oldValue, newValue) -> {
+            setTraffic(newValue.intValue());
+        });
+
+        spawnCarButton.setOnAction(event -> {
+            spawnCar(false);
+        });
+
+        spawnEMSButton.setOnAction(event -> {
+            spawnCar(true);
+        });
+
+        controls.getChildren().addAll(
+                trafficLabel,
+                trafficSlider,
+                spawnCarButton,
+                spawnEMSButton
+        );
+
+        controls.setLayoutX(20);
+        controls.setLayoutY(WINDOW_HEIGHT - 120);
+
+        streetPane.getChildren().add(controls);
+
     }
 
     //draw road
@@ -754,14 +799,20 @@ public class GUIMain{
         }
     }
 
-    private void createCar(int id, GUILane lane, Bearing bearing, int laneNumber) {
+    private void createCar(int id, GUILane lane, Bearing bearing, int laneNumber, boolean EMS) {
         //create the logic car
-        GUICar guiCar = new GUICar(id, lane, bearing, laneNumber); //TODO will need to standardise laneNumber
+        GUICar guiCar = new GUICar(id, lane, bearing, laneNumber, null); //TODO will need to standardise laneNumber
+        Image image;
 
-        //create visual car
-        String imagePath = carImages.get(random.nextInt(carImages.size()));
+        if(EMS) {
+            image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/Ambulance.png")));
+        }
 
-        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath)));
+        else {
+            //create visual car
+            String imagePath = carImages.get(random.nextInt(carImages.size()));
+            image = new Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath)));
+        }
 
         ImageView car = new ImageView(image);
 
@@ -910,7 +961,7 @@ public class GUIMain{
         double spawnInterval = 3000.0 - (traffic - 1) * 250.0;
 
         carSpawner = new Timeline(new KeyFrame(Duration.millis(spawnInterval), event -> {
-            spawnCar();
+            spawnCar(false);
         }));
 
         carSpawner.setCycleCount(Timeline.INDEFINITE);
@@ -937,7 +988,7 @@ public class GUIMain{
     }
 
     //spawns cars in random directions and lanes
-    private void spawnCar() {
+    private void spawnCar(boolean EMS) {
         //random direction
         Bearing bearing = Bearing.values()[random.nextInt(Bearing.values().length)];
 
@@ -947,7 +998,7 @@ public class GUIMain{
 
         GUILane lane = null; //null for now
 
-        createCar(nextCarID, lane, bearing, laneNumber);
+        createCar(nextCarID, lane, bearing, laneNumber, EMS);
 
         nextCarID++;
     }

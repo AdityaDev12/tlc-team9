@@ -719,6 +719,9 @@ public class GUIMain{
         inner.setArcHeight(inner.getHeight()*.8);
         inner.setArcWidth(inner.getWidth()*.8);
 
+        timer = new Text("0");
+        timer.setFill(Color.ORANGERED);
+
         streetPane.getChildren().addAll(housing, inner, timer);
         pedLights.add(new PedLightVisual(timer));
     }
@@ -1144,7 +1147,7 @@ public class GUIMain{
     //small private helper class to store traffic lights
     private record TrafficLightVisual(Circle redLight, Circle yellowLight, Circle greenLight) {
     }
-    private record PedLightVisual(Rectangle base, Rectangle inner, Text timer) {}
+    private record PedLightVisual (Text timer) {}
 
     //small private helper class to store car visuals
     private static class CarVisual {

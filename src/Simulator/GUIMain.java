@@ -1061,7 +1061,50 @@ public class GUIMain{
             System.err.println("ERROR[GUIMain]: Invalid light ID " + lightID + " for direction " + direction);
             return;
         }
+
         TrafficLightVisual light = directionalLights.get(lightID);
+
+        //update simulation logic
+        int laneID;
+
+        switch (direction) {
+
+            case North:
+                laneID = lightID;
+                break;
+
+            case South:
+                laneID = lightID + 3;
+                break;
+
+            case East:
+                laneID = lightID + 6;
+                break;
+
+            case West:
+                laneID = lightID + 9;
+                break;
+
+            default:
+                return;
+        }
+
+        LaneList.get(laneID).updateLights(0, color);
+
+
+        //update canMove for cars in that lane
+        for (CarVisual carVisual : cars) {
+
+            if (carVisual.getCurrentBearing() == direction
+                    && carVisual.getLaneNumber() == lightID) {
+
+                if (color == LightCol.Green) {
+                    carVisual.getCar().setCanMove(true);
+                } else {
+                    carVisual.getCar().setCanMove(false);
+                }
+            }
+        }
 
         //turn off all lights
         light.redLight.setFill(inactiveRed);

@@ -10,7 +10,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
-import javafx.scene.effect.Light;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
@@ -22,6 +21,7 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
+import javax.print.attribute.standard.MediaSize;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -249,6 +249,10 @@ public class GUIMain{
         for (int lane = 0; lane < LANES_PER_DIRECTION; lane++) {
             LaneList.add(new GUILane(lane + 9, Bearing.West));
         }
+/*
+        for (GUILane lane : LaneList) {
+            lane.updateLights(0, LightCol.Green);
+        }*/
     }
 
     //returns the lane
@@ -897,7 +901,7 @@ public class GUIMain{
         double speed = MIN_CAR_SPEED + random.nextDouble() * (MAX_CAR_SPEED - MIN_CAR_SPEED);
 
         //connect logic car with visual
-        CarVisual carVisual = new CarVisual(guiCar, car, speed);
+        CarVisual carVisual = new CarVisual(guiCar, car, speed, laneNumber);
 
         //store car
         cars.add(carVisual);
@@ -978,7 +982,7 @@ public class GUIMain{
             if (!carVisual.getCar().canMove()) {
 
                 if (isAtStopLine(carVisual)) {
-                    return;
+                    carVisual.setSpeed(0);
                 }
             }
 
@@ -1231,15 +1235,19 @@ public class GUIMain{
     private static class CarVisual {
         private final GUICar car;
         private final ImageView imageView;
-        private final double speed;
+        private double speed;
+        private double originalSpeed;
         private Timeline timeline;
+        private int laneNumber;
 
         private Bearing currentBearing;
 
-        public CarVisual(GUICar car, ImageView imageView, double speed) {
+        public CarVisual(GUICar car, ImageView imageView, double speed, int laneNumber) {
             this.car = car;
             this.imageView = imageView;
             this.speed = speed;
+            this.originalSpeed = speed;
+            this.laneNumber = laneNumber;
 
             this.currentBearing = car.getBearing();
         }
@@ -1260,6 +1268,14 @@ public class GUIMain{
             return speed;
         }
 
+        public void setSpeed(double speed) {
+            this.speed = speed;
+        }
+
+        public double getOriginalSpeed() {
+            return originalSpeed;
+        }
+
         public ImageView getImageView() {
             return imageView;
         }
@@ -1270,6 +1286,10 @@ public class GUIMain{
 
         public void setTimeline(Timeline timeline) {
             this.timeline = timeline;
+        }
+
+        public int getLaneNumber() {
+            return laneNumber;
         }
     }
 }

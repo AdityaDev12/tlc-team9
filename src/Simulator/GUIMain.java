@@ -175,6 +175,25 @@ public class GUIMain{
 
             drawTrafficLight(x, y, Bearing.East);
         }
+
+
+            double x = intersectionLeft + (1 * LANE_WIDTH) + (ROAD_WIDTH / 2);
+            double y = intersectionBottom + LINE_LENGTH - (STOPLINE_WIDTH * 3) + CROSSWALK_OFFSET;
+            drawTrafficLight(x, y, Bearing.North);
+
+             x = intersectionLeft + (2 * LANE_WIDTH);
+             y = intersectionTop - LINE_LENGTH + STOPLINE_WIDTH;
+            drawTrafficLight(x, y, Bearing.South);
+
+             x = intersectionRight + LINE_LENGTH - (STOPLINE_WIDTH * 3) + CROSSWALK_OFFSET;
+             y = intersectionTop + (3 * LANE_WIDTH);
+            drawTrafficLight(x, y, Bearing.West);
+
+             x = intersectionLeft - LINE_LENGTH + STOPLINE_WIDTH;
+             y = intersectionTop + (4 * LANE_WIDTH) + (ROAD_WIDTH / 2);
+            drawTrafficLight(x, y, Bearing.East);
+
+
         drawArrowMarkings();
 
         startCarSpawner();

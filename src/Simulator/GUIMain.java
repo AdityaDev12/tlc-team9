@@ -24,11 +24,7 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 
 import javax.print.attribute.standard.MediaSize;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-
-import java.util.Random;
+import java.util.*;
 
 /*
 creates all javafx visuals and animations
@@ -67,7 +63,8 @@ public class GUIMain{
     private final ArrayList<GUICar> CarList = new ArrayList<>();
 
     //store traffic light visuals
-    private final ArrayList<TrafficLightVisual> trafficLights = new ArrayList<>();
+    private final Map<Bearing, ArrayList<TrafficLightVisual>> trafficLights = new EnumMap<>(Bearing.class);
+//    private final ArrayList<TrafficLightVisual> trafficLights = new ArrayList<>();
     private final ArrayList<PedLightVisual> pedLights = new ArrayList<>();
 
 
@@ -104,6 +101,11 @@ public class GUIMain{
 
         WINDOW_WIDTH = screenBounds.getWidth();
         WINDOW_HEIGHT = screenBounds.getHeight();
+
+        trafficLights.put(Bearing.North, new ArrayList<>());
+        trafficLights.put(Bearing.South, new ArrayList<>());
+        trafficLights.put(Bearing.East, new ArrayList<>());
+        trafficLights.put(Bearing.West, new ArrayList<>());
     }
 
     public void makeGUI() {
@@ -982,7 +984,8 @@ public class GUIMain{
         streetPane.getChildren().addAll(housing, redLight, yellowLight, greenLight);
 
         //store traffic lights to change them later
-        trafficLights.add(new TrafficLightVisual(redLight, yellowLight, greenLight));
+        trafficLights.get(bearing).add(new TrafficLightVisual(redLight, yellowLight, greenLight));
+//        trafficLights.add(new TrafficLightVisual(redLight, yellowLight, greenLight));
 
     }
 
@@ -992,13 +995,24 @@ public class GUIMain{
     }
 
     //change traffic light colors
-    public void changeTrafficLight(int lightID, LightCol color) {
+    public void changeTrafficLight(int lightID, LightCol color, LightShape shape, Bearing direction) {
         //inactiveColors
         Color inactiveRed = Color.rgb(80, 20, 20);
         Color inactiveYellow = Color.rgb(80, 70, 20);
         Color inactiveGreen = Color.rgb(20, 70, 30);
 
-        TrafficLightVisual light = trafficLights.get(lightID);
+        //find light associated with directional group
+        ArrayList<TrafficLightVisual> directionalLights = trafficLights.get(direction);
+
+        if (directionalLights == null) {
+            System.err.println("ERROR[GUIMain]: No lights found for direction: " + direction);
+            return;
+        }
+        if (lightID < 0 || lightID >= directionalLights.size()) {
+            System.err.println("ERROR[GUIMain]: Invalid light ID " + lightID + " for direction " + direction);
+            return;
+        }
+        TrafficLightVisual light = directionalLights.get(lightID);
 
         //turn off all lights
         light.redLight.setFill(inactiveRed);

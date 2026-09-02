@@ -1197,11 +1197,37 @@ public class GUIMain{
         Timeline timeline = new Timeline(new KeyFrame(Duration.millis(16), event -> {
             Bearing bearing = carVisual.car.getBearing();
 
+            CarVisual carAhead = getCarAhead(carVisual);
+
             //stop at the stop line when the car is not allowed to move
             if (!carVisual.getCar().canMove()) {
 
-                if (isAtStopLine(carVisual)) {
+                if (isAtStopLine(carVisual) && !reachedIntersection(carVisual)) {
                     carVisual.setSpeed(0);
+                }
+
+                else {
+                    carVisual.setSpeed(carVisual.getOriginalSpeed());
+                }
+            }
+
+            else {
+
+                carVisual.setSpeed(carVisual.getOriginalSpeed());
+
+            }
+
+            //check the car in front
+            if(carAhead != null) {
+                //following distance
+                System.out.println("Car ahead!");
+                if(carAhead.getSpeed() == 0) {
+                    carVisual.setSpeed(0);
+                }
+
+
+                else {
+                    carVisual.setSpeed(carAhead.getSpeed());
                 }
             }
 
@@ -1231,6 +1257,10 @@ public class GUIMain{
 
             if(otherCar != null) {
                 System.out.println("Collision!!!");
+
+                carVisual.setSpeed(0);
+                otherCar.setSpeed(0);
+
                 carVisual.getTimeline().stop();
                 otherCar.getTimeline().stop();
             }
@@ -1248,6 +1278,120 @@ public class GUIMain{
 
         timeline.play();
     }
+
+    //checks if car is too close to the car in front
+    private CarVisual getCarAhead(CarVisual carVisual) {
+
+
+        ImageView car = carVisual.getImageView();
+
+
+        for (CarVisual otherCar : cars) {
+
+
+            if (otherCar == carVisual) {
+                continue;
+            }
+
+
+            //must be traveling in the same direction
+            if (otherCar.getCurrentBearing() != carVisual.getCurrentBearing()) {
+                continue;
+            }
+
+
+            //must be in the same lane
+            if(otherCar.getLaneNumber() != carVisual.getLaneNumber()) {
+                continue;
+            }
+
+
+            ImageView other = otherCar.getImageView();
+
+
+            Bearing bearing = carVisual.getCurrentBearing();
+
+            double followingDistance = 20;
+
+            switch (bearing) {
+
+
+                case North:
+
+
+                    if (other.getY() < car.getY() && car.getY() - other.getY() < car.getFitHeight() + followingDistance) {
+                        return otherCar;
+                    }
+
+
+                    break;
+
+
+                case South:
+
+
+                    if (other.getY() > car.getY() && other.getY() - car.getY() < car.getFitHeight() + followingDistance) {
+
+
+                        return otherCar;
+                    }
+
+
+                    break;
+
+
+                case East:
+                    if (other.getX() > car.getX() && other.getX() - car.getX() < car.getFitWidth() + followingDistance) {
+                        return otherCar;
+                    }
+
+
+                    break;
+
+
+                case West:
+                    if (other.getX() < car.getX() && car.getX() - other.getX() < car.getFitWidth() + followingDistance) {
+                            return otherCar;
+                    }
+
+
+                    break;
+            }
+        }
+
+
+        return null;
+    }
+
+    //true if car has entered intersection
+    private boolean reachedIntersection(CarVisual carVisual) {
+
+        ImageView car = carVisual.getImageView();
+
+        double intersectionLeft = (WINDOW_WIDTH - ROAD_WIDTH) / 2.0;
+        double intersectionRight = intersectionLeft + ROAD_WIDTH;
+
+        double intersectionTop = (WINDOW_HEIGHT - ROAD_WIDTH) / 2.0;
+        double intersectionBottom = intersectionTop + ROAD_WIDTH;
+
+        switch (carVisual.getCurrentBearing()) {
+
+            case North:
+                return car.getY() < intersectionBottom;
+
+            case South:
+                return car.getY() > intersectionTop;
+
+            case East:
+                return car.getX() > intersectionLeft;
+
+            case West:
+                return car.getX() < intersectionRight;
+        }
+
+        return false;
+    }
+
 
     // Returns true if the car is at the stop line
     private boolean isAtStopLine(CarVisual carVisual) {

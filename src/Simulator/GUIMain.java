@@ -17,7 +17,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
-import javafx.scene.text.Text;
+import javafx.scene.text.*;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -731,7 +731,11 @@ public class GUIMain{
         inner.setArcHeight(inner.getHeight()*.8);
         inner.setArcWidth(inner.getWidth()*.8);
 
-        timer = new Text("0");
+        timer = new Text(x + width*.25, y + width*.65, "0");
+        timer.setFont(Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 10));
+
+        timer.setTextAlignment(TextAlignment.CENTER);
+        timer.setStrokeWidth(1.5);
         timer.setFill(Color.ORANGERED);
 
         streetPane.getChildren().addAll(housing, inner, timer);

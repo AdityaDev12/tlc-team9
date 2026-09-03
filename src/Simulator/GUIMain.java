@@ -18,6 +18,7 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
+import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.*;
 import javafx.stage.Screen;
@@ -156,34 +157,34 @@ public class GUIMain{
 
         //northbound traffic lights
         for(int lane = 0; lane < LANES_PER_DIRECTION; lane++) {
-            double x = intersectionLeft + (lane * LANE_WIDTH) + (ROAD_WIDTH / 2);
-            double y = intersectionBottom + LINE_LENGTH - (STOPLINE_WIDTH * 3) + CROSSWALK_OFFSET;
+            double x = intersectionLeft + (lane * LANE_WIDTH) + (LANE_WIDTH / 2.0) + (ROAD_WIDTH / 2);
+            double y = intersectionBottom + LINE_LENGTH - (STOPLINE_WIDTH * 3) + CROSSWALK_OFFSET * 2;
 
-            drawTrafficLight(x, y, Bearing.North);
+            drawTrafficLight(x, y, Bearing.North, lane == 0);
         }
 
         //southbound traffic lights
         for(int lane = 0; lane < LANES_PER_DIRECTION; lane++) {
-            double x = intersectionLeft + (lane * LANE_WIDTH);
+            double x = intersectionLeft + (lane * LANE_WIDTH) + (LANE_WIDTH / 2.0);
             double y = intersectionTop - LINE_LENGTH + STOPLINE_WIDTH;
 
-            drawTrafficLight(x, y, Bearing.South);
+            drawTrafficLight(x, y, Bearing.South, lane == 2);
         }
 
         //westbound traffic lights
         for(int lane = 0; lane < LANES_PER_DIRECTION; lane++) {
-            double x = intersectionRight + LINE_LENGTH - (STOPLINE_WIDTH * 3) + CROSSWALK_OFFSET;
-            double y = intersectionTop + (lane * LANE_WIDTH);
+            double x = intersectionRight + LINE_LENGTH - (STOPLINE_WIDTH * 3) + CROSSWALK_OFFSET * 2;
+            double y = intersectionTop + (lane * LANE_WIDTH) + (LANE_WIDTH / 2.0);
 
-            drawTrafficLight(x, y, Bearing.West);
+            drawTrafficLight(x, y, Bearing.West, lane == 2);
         }
 
         //eastbound traffic lights
         for(int lane = 0; lane < LANES_PER_DIRECTION; lane++) {
             double x = intersectionLeft - LINE_LENGTH + STOPLINE_WIDTH;
-            double y = intersectionTop + (lane * LANE_WIDTH) + (ROAD_WIDTH / 2);
+            double y = intersectionTop + (lane * LANE_WIDTH) + (ROAD_WIDTH / 2) + (LANE_WIDTH / 2.0);
 
-            drawTrafficLight(x, y, Bearing.East);
+            drawTrafficLight(x, y, Bearing.East, lane == 0);
         }
 
         drawSensors();
@@ -968,96 +969,84 @@ public class GUIMain{
     }
 
     //traffic light
-    private void drawTrafficLight(double x, double y, Bearing bearing) {
-        //size of housing
-        double height = 25;
+    private void drawTrafficLight(double x, double y, Bearing bearing, boolean leftTurn) {
 
-        //gap between the lights and housing
-        double gap = 0.6;
+        //housing
+        double housingSize = 30;
 
-        //light radius
-        double radius = height * 0.4;
+        double lightSize = 20;
 
-        //light circumference
-        double circumference = 2 * radius;
+        //center light inside housing
+        double lightX = x - lightSize / 2;
+        double lightY = y - lightSize / 2;
 
-        Rectangle housing;
-
-        Circle redLight;
-        Circle yellowLight;
-        Circle greenLight;
-
-        if(bearing == Bearing.East || bearing == Bearing.West) {
-            //housing for lights
-            housing = new Rectangle(x, y, height, LANE_WIDTH);
-
-            //round the corners
-            housing.setArcWidth(housing.getWidth() * 0.8);
-            housing.setArcHeight(housing.getHeight() * 0.3333);
-
-            //traffic lights
-            if(bearing == Bearing.West) {
-                redLight = new Circle(x + 12.5, y + 10 + (2 * circumference) + gap, radius);
-                greenLight = new Circle(x + 12.5, y + 10 + gap, radius);
-            }
-
-            else {
-                redLight = new Circle(x + 12.5, y + 10 + gap, radius);
-                greenLight = new Circle(x + 12.5, y + 10 + (2 * circumference) + gap, radius);
-            }
-
-            yellowLight = new Circle(x + 12.5, y + 10 + circumference + gap, radius);
-
-            //inactiveColors
-            Color inactiveRed = Color.rgb(80, 20, 20);
-            Color inactiveYellow = Color.rgb(80, 70, 20);
-            Color inactiveGreen = Color.rgb(20, 70, 30);
-
-            //initial colors
-            redLight.setFill(Color.RED);
-            yellowLight.setFill(inactiveYellow);
-            greenLight.setFill(inactiveGreen);
-        }
-
-        else {
-            //housing for lights
-            housing = new Rectangle(x, y, LANE_WIDTH, height);
-
-            //round the corners
-            housing.setArcWidth(housing.getWidth() * 0.3333);
-            housing.setArcHeight(housing.getHeight() * 0.8);
-
-            //traffic lights
-            if(bearing == Bearing.South) {
-                redLight = new Circle(x + 10 + (2 * circumference) + gap, y + 12.5, radius);
-                greenLight = new Circle(x + 10 + gap, y + 12.5, radius);
-            }
-
-            else {
-                redLight = new Circle(x + 10 + gap, y + 12.5, radius);
-                greenLight = new Circle(x + 10 + (2 * circumference) + gap, y + 12.5, radius);
-            }
-
-            yellowLight = new Circle(x + 10 + circumference + gap, y + 12.5, radius);
-
-            //inactiveColors
-            Color inactiveRed = Color.rgb(80, 20, 20);
-            Color inactiveYellow = Color.rgb(80, 70, 20);
-            Color inactiveGreen = Color.rgb(20, 70, 30);
-
-            //initial colors
-            redLight.setFill(Color.RED);
-            yellowLight.setFill(inactiveYellow);
-            greenLight.setFill(inactiveGreen);
-        }
+        Rectangle housing = new Rectangle(
+                x - housingSize / 2,
+                y - housingSize / 2, housingSize, housingSize);
 
         housing.setFill(Color.BLACK);
 
-        streetPane.getChildren().addAll(housing, redLight, yellowLight, greenLight);
+        housing.setArcWidth(0);
+        housing.setArcHeight(0);
 
-        //store traffic lights to change them later
-        trafficLights.get(bearing).add(new TrafficLightVisual(redLight, yellowLight, greenLight));
+        if(leftTurn) {
+            //small arrow
+            Polygon arrow = new Polygon();
+            arrow.getPoints().addAll(
+                    x - 8.0, y + 5.0,
+                    x - 8.0, y - 3.0,
+                    x - 2.0, y - 3.0,
+                    x - 2.0, y - 9.0,
+                    x + 8.0, y,
+                    x - 2.0, y + 9.0,
+                    x - 2.0, y + 3.0,
+                    x - 8.0, y + 3.0
+            );
+
+            //rotate arrow for the direction of traffic
+            switch (bearing) {
+
+                case North:
+                    arrow.setRotate(180);
+                    break;
+
+                case South:
+                    arrow.setRotate(0);
+                    break;
+
+                case East:
+                    arrow.setRotate(270);
+                    break;
+
+                case West:
+                    arrow.setRotate(90);
+                    break;
+            }
+
+            arrow.setFill(Color.RED);
+
+            streetPane.getChildren().addAll(housing, arrow);
+
+            //store traffic lights to change them later
+            trafficLights.get(bearing).add(new TrafficLightVisual(null, arrow, true));
+        }
+
+        else {
+            Rectangle light = new Rectangle(lightX, lightY, lightSize, lightSize);
+
+            light.setArcWidth(0);
+            light.setArcHeight(0);
+
+            //initial color
+            light.setFill(Color.RED);
+
+            streetPane.getChildren().addAll(housing, light);
+
+            //store traffic lights to change them later
+            trafficLights.get(bearing).add(new TrafficLightVisual(light, null, false));
 //        trafficLights.add(new TrafficLightVisual(redLight, yellowLight, greenLight));
+        }
+
 
     }
 
@@ -1068,11 +1057,6 @@ public class GUIMain{
 
     //change traffic light colors
     public void changeTrafficLight(int lightID, LightCol color, LightShape shape, Bearing direction) {
-        //inactiveColors
-        Color inactiveRed = Color.rgb(80, 20, 20);
-        Color inactiveYellow = Color.rgb(80, 70, 20);
-        Color inactiveGreen = Color.rgb(20, 70, 30);
-
         //find light associated with directional group
         ArrayList<TrafficLightVisual> directionalLights = trafficLights.get(direction);
 
@@ -1085,6 +1069,41 @@ public class GUIMain{
             return;
         }
         TrafficLightVisual light = directionalLights.get(lightID);
+
+        //change visual color
+        if(light.isLeftTurn()) {
+            switch (color) {
+
+                case Red:
+                    light.getLeftTurnArrow().setFill(Color.RED);
+                    break;
+
+                case Yellow:
+                    light.getLeftTurnArrow().setFill(Color.YELLOW);
+                    break;
+
+                case Green:
+                    light.getLeftTurnArrow().setFill(Color.GREEN);
+                    break;
+            }
+        }
+
+        else {
+            //turn on requested light
+            switch(color) {
+                case Red:
+                    light.getLight().setFill(Color.RED);
+                    break;
+
+                case Yellow:
+                    light.getLight().setFill(Color.YELLOW);
+                    break;
+
+                case Green:
+                    light.getLight().setFill(Color.GREEN);
+                    break;
+            }
+        }
 
         //update simulation logic
         int laneID;
@@ -1128,25 +1147,6 @@ public class GUIMain{
             }
         }
 
-        //turn off all lights
-        light.redLight.setFill(inactiveRed);
-        light.yellowLight.setFill(inactiveYellow);
-        light.greenLight.setFill(inactiveGreen);
-
-        //turn on requested light
-        switch(color) {
-            case Red:
-                light.redLight.setFill(Color.RED);
-                break;
-
-            case Yellow:
-                light.yellowLight.setFill(Color.YELLOW);
-                break;
-
-            case Green:
-                light.greenLight.setFill(Color.GREEN);
-                break;
-        }
 
         //store logic state
         light.setCurrentColor(color);
@@ -1689,18 +1689,28 @@ public class GUIMain{
 
     //small private helper class to store traffic lights
     private static class TrafficLightVisual {
-        private final Circle redLight;
-        private final Circle yellowLight;
-        private final Circle greenLight;
+        private Rectangle light;
+        private Polygon leftTurnArrow;
+        private boolean leftTurn;
 
-        private LightCol currentColor;
+        private LightCol currentColor = LightCol.Red;
 
-        public TrafficLightVisual(Circle redLight, Circle yellowLight, Circle greenLight) {
-            this.redLight = redLight;
-            this.yellowLight = yellowLight;
-            this.greenLight = greenLight;
+        public TrafficLightVisual(Rectangle light, Polygon leftTurnArrow, boolean leftTurn) {
+            this.light = light;
+            this.leftTurnArrow = leftTurnArrow;
+            this.leftTurn = leftTurn;
+        }
 
-            currentColor = LightCol.Red;
+        public Polygon getLeftTurnArrow() {
+            return leftTurnArrow;
+        }
+
+        public boolean isLeftTurn() {
+            return leftTurn;
+        }
+
+        public Rectangle getLight() {
+            return light;
         }
 
         public LightCol getCurrentColor() {
@@ -1711,6 +1721,8 @@ public class GUIMain{
             this.currentColor = currentColor;
         }
     }
+
+
     private record PedLightVisual (Text timer) {}
 
     //small private helper class to store car visuals

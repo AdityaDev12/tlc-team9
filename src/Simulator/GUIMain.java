@@ -1,6 +1,7 @@
 package Simulator;
 
 import javafx.animation.KeyFrame;
+import javafx.animation.PauseTransition;
 import javafx.animation.Timeline;
 import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
@@ -246,11 +247,33 @@ public class GUIMain{
 
         spawnCarButton.setOnAction(event -> {
             spawnCar(false);
+
+            //cool down between spawns
+            spawnCarButton.setDisable(true);
+
+            PauseTransition cooldown = new PauseTransition(Duration.seconds(3));
+
+            cooldown.setOnFinished(e -> {
+                spawnCarButton.setDisable(false);
+            });
+
+            cooldown.play();
         });
 
         spawnEMSButton.setOnAction(event -> {
             spawnCar(true);
             setEMSIndicator(true);
+
+            //cool down between spawns
+            spawnEMSButton.setDisable(true);
+
+            PauseTransition cooldown = new PauseTransition(Duration.seconds(3));
+
+            cooldown.setOnFinished(e -> {
+                spawnEMSButton.setDisable(false);
+            });
+
+            cooldown.play();
         });
 
         clearAllCars.setOnAction(event -> {

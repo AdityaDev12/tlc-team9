@@ -20,7 +20,7 @@ public class GUILane {
     private void makeLights() {
         myLights = new ArrayList<>();
 
-        GUILight light = new GUILight(0, LightShape.Circle, bearing);
+        GUILight light = new GUILight(0, LightShape.Square, bearing);
 
         myLights.add(light);
     }

@@ -1285,7 +1285,6 @@ public class GUIMain{
             //check the car in front
             if(carAhead != null) {
                 //following distance
-                System.out.println("Car ahead!");
                 if(carAhead.getSpeed() == 0) {
                     carVisual.setSpeed(0);
                 }
@@ -1548,6 +1547,38 @@ public class GUIMain{
         //random lane
         //0, 1, or 2
         int laneNumber = random.nextInt(LANES_PER_DIRECTION);
+
+        //check if there is already a car near this spawn point
+        for (CarVisual carVisual : cars) {
+
+            //not in the same direction
+            if (carVisual.getCurrentBearing() != bearing) {
+                continue;
+            }
+
+            //doesn't have the same lane number
+            if (carVisual.getLaneNumber() != laneNumber) {
+                continue;
+            }
+
+            ImageView otherCar = carVisual.getImageView();
+
+            //too close to spawn spoint
+            boolean tooClose = switch (bearing) {
+                case North -> otherCar.getY() > WINDOW_HEIGHT - 100;
+
+                case South -> otherCar.getY() < 50;
+
+                case East -> otherCar.getX() < 50;
+
+                case West -> otherCar.getX() > WINDOW_WIDTH - 150;
+            };
+
+            if (tooClose) {
+                System.out.println("TooClose");
+                return; //don't spawn car
+            }
+        }
 
         GUILane lane = getLane(bearing, laneNumber);
 

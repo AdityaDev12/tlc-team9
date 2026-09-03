@@ -1,43 +1,57 @@
 package Harness;
+
 import Communication.InstructionMessage;
-import Communication.SimulatorEvent;
 import Communication.TLCCommand;
-import Simulator.*;
-
-import java.io.IOException;
-
-/**
- * Temporary test, creates mux
- */
+import Simulator.LightCol;
+import Simulator.LightShape;
+import Simulator.Position;
 
 public class Main {
+
+    private static Mux mux;
 
     public static void main(String[] args) {
         System.out.println("Starting Harness...");
         try {
-            Mux mux = new Mux(); // connects to simulator
+            mux = new Mux();
+            mux.listenForEvents();
 
-            // Test message
-            InstructionMessage message = new InstructionMessage(
-                    TLCCommand.SET_LIGHT_STATE,
-                    0,
-                    LightCol.Green,
-                    LightShape.Circle,
-                    Position.East
-            );
-            mux.sendInstruction(message);
+            System.out.println("Running continuous signal cycle. Ctrl+C to stop.\n");
 
-            // Receive event from Simulator
-            SimulatorEvent event = mux.receiveEvent();
-            if (event != null) {
-                System.out.println("Event Command: " + event.getCommand());
-                System.out.println("Event Target: " + event.getTarget());
-                System.out.println("Event Value: " + event.getValue());
+            while (true) {
+                runPhase("VERTICAL (N/S)", Position.North, Position.South, Position.East, Position.West);
+                runPhase("HORIZONTAL (E/W)", Position.East, Position.West, Position.North, Position.South);
             }
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             System.err.println("ERROR: Main");
             e.printStackTrace();
+        }
+    }
+
+    private static void runPhase(String label, Position goA, Position goB,
+                                 Position stopA, Position stopB) throws InterruptedException {
+        System.out.println("=== " + label + " GREEN ===");
+        setDirection(goA, LightCol.Green);
+        setDirection(goB, LightCol.Green);
+        setDirection(stopA, LightCol.Red);
+        setDirection(stopB, LightCol.Red);
+        Thread.sleep(9000);
+
+        System.out.println("=== " + label + " YELLOW ===");
+        setDirection(goA, LightCol.Yellow);
+        setDirection(goB, LightCol.Yellow);
+        Thread.sleep(3000);
+
+        System.out.println("=== " + label + " RED (all-clear) ===");
+        setDirection(goA, LightCol.Red);
+        setDirection(goB, LightCol.Red);
+        Thread.sleep(1500);
+    }
+
+    private static void setDirection(Position position, LightCol color) {
+        for (int laneId = 0; laneId < 3; laneId++) {
+            mux.sendInstruction(new InstructionMessage(TLCCommand.SET_LIGHT_STATE, laneId, color, LightShape.Circle, position));
         }
     }
 }

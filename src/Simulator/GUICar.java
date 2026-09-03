@@ -5,16 +5,15 @@ public class GUICar {
     private Bearing myBearing;
     private int ID;
     private boolean isAlive = true;
-    private int laneID; //TODO will need to standardise laneNumber
+    private int laneID;
     private double distance;
     private GUIIntersection intersection;
 
     private boolean allowedToMove = true;
+    private boolean committed = false; // once true, ignore future light changes - already entered
 
     private boolean sensorActive = false;
-
     private boolean isEMS;
-
 
     public GUICar(int ID, GUILane myLane, Bearing myBearing, int laneID, GUIIntersection intersection, boolean isEMS) {
         this.ID = ID;
@@ -26,69 +25,38 @@ public class GUICar {
         this.isEMS = isEMS;
     }
 
-    public boolean canMove() {
-        return allowedToMove;
-    }
+    public boolean canMove() { return allowedToMove; }
+    public boolean isEMS() { return isEMS; }
+    public void setCanMove(boolean allowedToMove) { this.allowedToMove = allowedToMove; }
+    public Bearing getBearing() { return myBearing; }
+    public double getDistance() { return distance; }
+    public boolean isSensorActive() { return sensorActive; }
 
-    public boolean isEMS() {
-        return isEMS;
-    }
-
-    public void setCanMove(boolean allowedToMove) {
-        this.allowedToMove = allowedToMove;
-    }
-
-    public Bearing getBearing() {
-        return myBearing;
-    }
-
-    public double getDistance() {
-        return distance;
-    }
-
-
-    // Adds to the distance whenever the JavaFX car moves
     public void addDistance(double amount) {
-
         distance += amount;
-
         updateMovement();
     }
 
     private void updateMovement() {
-        if (distance >= 50) {
+        if (distance >= 50 && !committed) {
 
-            //activate the lane sensor
             if (!sensorActive) {
-
                 myLane.updateSensor(0, true);
-
                 sensorActive = true;
             }
 
-
-            // Check the current traffic light
             if (myLane.getLightCol(0) == LightCol.Green) {
-
-                //go
                 allowedToMove = true;
-
+                committed = true; // locked in - a later light change can't stop this car anymore
             } else {
-
-                //stop
                 allowedToMove = false;
             }
         }
-
     }
 
-    // Called when the car has passed the sensor/intersection area
     public void leaveSensor() {
-
         if (sensorActive) {
-
-            myLane.updateSensor(laneID, false);
-
+            myLane.updateSensor(0, false);
             sensorActive = false;
         }
     }

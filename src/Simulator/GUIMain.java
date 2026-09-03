@@ -158,7 +158,7 @@ public class GUIMain{
         //northbound traffic lights
         for(int lane = 0; lane < LANES_PER_DIRECTION; lane++) {
             double x = intersectionLeft + (lane * LANE_WIDTH) + (LANE_WIDTH / 2.0) + (ROAD_WIDTH / 2);
-            double y = intersectionBottom + LINE_LENGTH - (STOPLINE_WIDTH * 3) + CROSSWALK_OFFSET * 2;
+            double y = intersectionBottom + LINE_LENGTH - (STOPLINE_WIDTH * 3) + CROSSWALK_OFFSET * 3;
 
             drawTrafficLight(x, y, Bearing.North, lane == 0);
         }
@@ -166,14 +166,14 @@ public class GUIMain{
         //southbound traffic lights
         for(int lane = 0; lane < LANES_PER_DIRECTION; lane++) {
             double x = intersectionLeft + (lane * LANE_WIDTH) + (LANE_WIDTH / 2.0);
-            double y = intersectionTop - LINE_LENGTH + STOPLINE_WIDTH;
+            double y = intersectionTop - LINE_LENGTH + STOPLINE_WIDTH * 2;
 
             drawTrafficLight(x, y, Bearing.South, lane == 2);
         }
 
         //westbound traffic lights
         for(int lane = 0; lane < LANES_PER_DIRECTION; lane++) {
-            double x = intersectionRight + LINE_LENGTH - (STOPLINE_WIDTH * 3) + CROSSWALK_OFFSET * 2;
+            double x = intersectionRight + LINE_LENGTH - (STOPLINE_WIDTH * 3) + CROSSWALK_OFFSET * 3;
             double y = intersectionTop + (lane * LANE_WIDTH) + (LANE_WIDTH / 2.0);
 
             drawTrafficLight(x, y, Bearing.West, lane == 2);
@@ -181,7 +181,7 @@ public class GUIMain{
 
         //eastbound traffic lights
         for(int lane = 0; lane < LANES_PER_DIRECTION; lane++) {
-            double x = intersectionLeft - LINE_LENGTH + STOPLINE_WIDTH;
+            double x = intersectionLeft - LINE_LENGTH + STOPLINE_WIDTH * 2;
             double y = intersectionTop + (lane * LANE_WIDTH) + (ROAD_WIDTH / 2) + (LANE_WIDTH / 2.0);
 
             drawTrafficLight(x, y, Bearing.East, lane == 0);

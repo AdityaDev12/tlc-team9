@@ -25,7 +25,6 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
-import javax.print.attribute.standard.MediaSize;
 import java.util.*;
 
 /*
@@ -62,7 +61,6 @@ public class GUIMain{
     private static final double CROSSWALK_OFFSET = 5;
 
     private final ArrayList<GUILane> LaneList = new ArrayList<>();
-    private final ArrayList<GUICar> CarList = new ArrayList<>();
 
     //store traffic light visuals
     private final Map<Bearing, ArrayList<TrafficLightVisual>> trafficLights = new EnumMap<>(Bearing.class);
@@ -242,11 +240,11 @@ public class GUIMain{
         trafficSlider.setMinorTickCount(0);
         trafficSlider.setSnapToTicks(true);
 
-        trafficSlider.valueProperty().addListener((obs, oldValue, newValue) -> {
+        trafficSlider.valueProperty().addListener((_, _, newValue) -> {
             setTraffic(newValue.intValue());
         });
 
-        spawnCarButton.setOnAction(event -> {
+        spawnCarButton.setOnAction(_ -> {
             spawnCar(false);
 
             //cool down between spawns
@@ -254,14 +252,14 @@ public class GUIMain{
 
             PauseTransition cooldown = new PauseTransition(Duration.seconds(3));
 
-            cooldown.setOnFinished(e -> {
+            cooldown.setOnFinished(_ -> {
                 spawnCarButton.setDisable(false);
             });
 
             cooldown.play();
         });
 
-        spawnEMSButton.setOnAction(event -> {
+        spawnEMSButton.setOnAction(_ -> {
             spawnCar(true);
             setEMSIndicator(true);
 
@@ -270,14 +268,14 @@ public class GUIMain{
 
             PauseTransition cooldown = new PauseTransition(Duration.seconds(3));
 
-            cooldown.setOnFinished(e -> {
+            cooldown.setOnFinished(_ -> {
                 spawnEMSButton.setDisable(false);
             });
 
             cooldown.play();
         });
 
-        clearAllCars.setOnAction(event -> {
+        clearAllCars.setOnAction(_ -> {
             for(CarVisual car : new ArrayList<>(cars)) {
                 removeCar(car);
             }
@@ -361,10 +359,6 @@ public class GUIMain{
         for (int lane = 0; lane < LANES_PER_DIRECTION; lane++) {
             LaneList.add(new GUILane(lane + 9, Bearing.West));
         }
-/*
-        for (GUILane lane : LaneList) {
-            lane.updateLights(0, LightCol.Green);
-        }*/
     }
 
     //returns the lane
@@ -1050,11 +1044,6 @@ public class GUIMain{
 
     }
 
-    public void changeLight(int LaneID, int LightID, LightCol Color){
-        GUILane theLane = LaneList.get(LaneID);
-        theLane.updateLights(LightID, Color);
-    }
-
     //change traffic light colors
     public void changeTrafficLight(int lightID, LightCol color, LightShape shape, Bearing direction) {
         //find light associated with directional group
@@ -1139,11 +1128,7 @@ public class GUIMain{
             if (carVisual.getCurrentBearing() == direction
                     && carVisual.getLaneNumber() == lightID) {
 
-                if (color == LightCol.Green) {
-                    carVisual.getCar().setCanMove(true);
-                } else {
-                    carVisual.getCar().setCanMove(false);
-                }
+                carVisual.getCar().setCanMove(color == LightCol.Green);
             }
         }
 
@@ -1259,7 +1244,7 @@ public class GUIMain{
 
         ImageView car = carVisual.imageView;
 
-        Timeline timeline = new Timeline(new KeyFrame(Duration.millis(16), event -> {
+        Timeline timeline = new Timeline(new KeyFrame(Duration.millis(16), _ -> {
             Bearing bearing = carVisual.car.getBearing();
 
             CarVisual carAhead = getCarAhead(carVisual);
@@ -1438,22 +1423,13 @@ public class GUIMain{
         double intersectionTop = (WINDOW_HEIGHT - ROAD_WIDTH) / 2.0;
         double intersectionBottom = intersectionTop + ROAD_WIDTH;
 
-        switch (carVisual.getCurrentBearing()) {
+        return switch (carVisual.getCurrentBearing()) {
+            case North -> car.getY() < intersectionBottom;
+            case South -> car.getY() > intersectionTop;
+            case East -> car.getX() > intersectionLeft;
+            case West -> car.getX() < intersectionRight;
+        };
 
-            case North:
-                return car.getY() < intersectionBottom;
-
-            case South:
-                return car.getY() > intersectionTop;
-
-            case East:
-                return car.getX() > intersectionLeft;
-
-            case West:
-                return car.getX() < intersectionRight;
-        }
-
-        return false;
     }
 
 
@@ -1472,22 +1448,13 @@ public class GUIMain{
 
         double stopDistance = CROSSWALK_WIDTH + CROSSWALK_OFFSET + STOPLINE_WIDTH * 2;
 
-        switch (bearing) {
+        return switch (bearing) {
+            case North -> car.getY() <= intersectionBottom + stopDistance;
+            case South -> car.getY() + car.getFitHeight() >= intersectionTop - stopDistance;
+            case East -> car.getX() + car.getFitWidth() >= intersectionLeft - stopDistance;
+            case West -> car.getX() <= intersectionRight + stopDistance;
+        };
 
-            case North:
-                return car.getY() <= intersectionBottom + stopDistance;
-
-            case South:
-                return car.getY() + car.getFitHeight() >= intersectionTop - stopDistance;
-
-            case East:
-                return car.getX() + car.getFitWidth() >= intersectionLeft - stopDistance;
-
-            case West:
-                return car.getX() <= intersectionRight + stopDistance;
-        }
-
-        return false;
     }
 
     //returns true if a car is outside the screen
@@ -1600,13 +1567,7 @@ public class GUIMain{
             }
         }
 
-        if (emsPresent) {
-            setEMSIndicator(true);
-        }
-
-        else {
-            setEMSIndicator(false);
-        }
+        setEMSIndicator(emsPresent);
     }
 
     //returns true if two cars are colliding

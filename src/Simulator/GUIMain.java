@@ -753,31 +753,40 @@ public class GUIMain{
 
         int laneNumber = lanePosition.ordinal();
 
+        //Convert the logical lane position to the physical lane on screen
+        int physicalLaneNumber = LANES_PER_DIRECTION - 1 - laneNumber;
+
         Group arrow;
 
-        if(lanePosition == LanePosition.Left) {
-            arrow = createLeftTurnArrow();
-        }
+        switch (lanePosition) {
 
-        else if(lanePosition == LanePosition.Right) {
-            arrow = createRightTurnArrow();
-        }
+            case Left:
+                arrow = createLeftTurnArrow();
+                break;
 
-        else {
-            arrow = createStraightArrow();
+            case Right:
+                arrow = createRightTurnArrow();
+                break;
+
+            case Straight:
+                arrow = createStraightArrow();
+                break;
+
+            default:
+                return;
         }
 
         //position and rotate the arrows based on the direction of travel
         switch(bearing) {
             case North:
-                x = intersectionLeft + (LANES_PER_DIRECTION + laneNumber) * LANE_WIDTH + LANE_WIDTH / 2.0;
+                x = intersectionLeft + (LANES_PER_DIRECTION + physicalLaneNumber) * LANE_WIDTH + LANE_WIDTH / 2.0;
                 y = intersectionBottom + CROSSWALK_WIDTH + CROSSWALK_OFFSET + STOPLINE_WIDTH * 3;
 
                 rotation = 0;
                 break;
 
             case South:
-                x = intersectionLeft + (LANES_PER_DIRECTION - 1 - laneNumber) * LANE_WIDTH + LANE_WIDTH / 2.0;
+                x = intersectionLeft + (LANES_PER_DIRECTION - 1 - physicalLaneNumber) * LANE_WIDTH + LANE_WIDTH / 2.0;
                 y = intersectionTop - CROSSWALK_WIDTH - CROSSWALK_OFFSET - STOPLINE_WIDTH * 3;
 
                 rotation = 180;
@@ -785,14 +794,14 @@ public class GUIMain{
 
             case East:
                 x = intersectionLeft - CROSSWALK_WIDTH - CROSSWALK_OFFSET - STOPLINE_WIDTH * 3;
-                y = intersectionTop + (LANES_PER_DIRECTION + laneNumber) * LANE_WIDTH + LANE_WIDTH / 2.0;
+                y = intersectionTop + (LANES_PER_DIRECTION + physicalLaneNumber) * LANE_WIDTH + LANE_WIDTH / 2.0;
 
                 rotation = 90;
                 break;
 
             case West:
                 x = intersectionRight + CROSSWALK_WIDTH + CROSSWALK_OFFSET + STOPLINE_WIDTH * 3;
-                y = intersectionTop + (LANES_PER_DIRECTION - 1 - laneNumber) * LANE_WIDTH +  LANE_WIDTH / 2.0;
+                y = intersectionTop + (LANES_PER_DIRECTION - 1 - physicalLaneNumber) * LANE_WIDTH +  LANE_WIDTH / 2.0;
 
                 rotation = 270;
                 break;

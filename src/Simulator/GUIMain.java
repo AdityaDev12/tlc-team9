@@ -22,6 +22,8 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
+import java.lang.reflect.Array;
+import java.sql.Time;
 import java.util.*;
 
 /*
@@ -61,7 +63,8 @@ public class GUIMain{
 
     //store traffic light visuals
     private final Map<Bearing, ArrayList<TrafficLightVisual>> trafficLights = new EnumMap<>(Bearing.class);
-//    private final ArrayList<TrafficLightVisual> trafficLights = new ArrayList<>();
+    private final ArrayList<PedestrianVisual> pedestrians = new ArrayList<>();
+
     private final ArrayList<PedLightVisual> pedLights = new ArrayList<>();
 
 
@@ -70,14 +73,35 @@ public class GUIMain{
 
     //list of car images
     private final List<String> carImages = List.of(
-            "/Audi.png",
-            "/Black_viper.png",
-            "/Car.png",
-            "/Mini_truck.png",
-            "/Mini_van.png",
-            "/Police.png",
-            "/taxi.png",
-            "/truck.png"
+            "/cars/Audi.png",
+            "/cars/Black_viper.png",
+            "/cars/Car.png",
+            "/cars/Mini_truck.png",
+            "/cars/Mini_van.png",
+            "/cars/Police.png",
+            "/cars/taxi.png",
+            "/cars/truck.png"
+    );
+
+    //list of pedestrians
+    private final List<List<String>> pedestrianImages = List.of(
+            List.of(
+                    "/pedestrians/person1_walk1.png",
+                    "/pedestrians/person1_walk2.png",
+                    "/pedestrians/person1_walk3.png"
+            ),
+
+            List.of(
+                    "/pedestrians/person3_walk1.png",
+                    "/pedestrians/person3_walk2.png",
+                    "/pedestrians/person3_walk3.png"
+            ),
+
+            List.of(
+                    "/pedestrians/person4_walk1.png",
+                    "/pedestrians/person4_walk2.png",
+                    "/pedestrians/person4_walk3.png"
+            )
     );
 
     //1 = low traffic, 10 = heavy traffic
@@ -252,6 +276,7 @@ public class GUIMain{
 
         Button spawnCarButton = new Button("Spawn Car");
         Button spawnEMSButton = new Button("Spawn EMS");
+        Button spawnPedestrian = new Button("Spawn Person");
 
         Button clearAllCars = new Button("Clear All Cars");
 
@@ -296,6 +321,10 @@ public class GUIMain{
             cooldown.play();
         });
 
+        spawnPedestrian.setOnAction(event -> {
+            spawnPedestrian();
+        });
+
         clearAllCars.setOnAction(event -> {
             for(CarVisual car : new ArrayList<>(cars)) {
                 removeCar(car);
@@ -307,6 +336,7 @@ public class GUIMain{
                 trafficSlider,
                 spawnCarButton,
                 spawnEMSButton,
+                spawnPedestrian,
                 clearAllCars
         );
 
@@ -1243,7 +1273,7 @@ public class GUIMain{
         Image image;
 
         if(EMS) {
-            image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/Ambulance.png")));
+            image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/cars/Ambulance.png")));
         }
 
         else {
@@ -1276,6 +1306,46 @@ public class GUIMain{
         checkEMS();
     }
 
+    //create pedestrians
+    private void spawnPedestrian() {
+        List<String> selectedPedestrian = pedestrianImages.get(random.nextInt(pedestrianImages.size()));
+
+        ArrayList<Image> walkingFrames = new ArrayList<>();
+
+        for(String imagePath : selectedPedestrian) {
+            walkingFrames.add(new Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath))));
+        }
+
+        ImageView pedestrian = new ImageView(walkingFrames.getFirst());
+
+        pedestrian.setFitWidth(30);
+        pedestrian.setFitHeight(30);
+        pedestrian.setPreserveRatio(true);
+
+        Bearing bearing = Bearing.values()[random.nextInt(Bearing.values().length)];
+
+        boolean firstCrosswalk = random.nextBoolean(); //randomly chooses what crosswalk to use
+
+        positionPed(pedestrian, bearing, firstCrosswalk);
+
+        double speed = 1.0;
+
+        PedestrianVisual pedestrianVisual =
+                new PedestrianVisual(
+                        pedestrian,
+                        walkingFrames,
+                        speed
+        );
+
+        streetPane.getChildren().add(pedestrian);
+
+        System.out.println("Pedestrian has been created.");
+
+        pedestrians.add(pedestrianVisual);
+
+        movePedestrian(pedestrianVisual, bearing);
+    }
+
     //remove car
     private void removeCar(CarVisual carVisual) {
         //stop animation
@@ -1287,6 +1357,14 @@ public class GUIMain{
         cars.remove(carVisual);
 
         checkEMS();
+    }
+
+    private void removePedestrian(PedestrianVisual pedestrianVisual) {
+        pedestrianVisual.stopAnimation();
+
+        streetPane.getChildren().remove(pedestrianVisual.getImageView());
+
+        pedestrians.remove(pedestrianVisual);
     }
 
     //initial position
@@ -1333,6 +1411,90 @@ public class GUIMain{
                 car.setX(WINDOW_WIDTH);
                 car.setY(roadTop + (LANES_PER_DIRECTION - 1 - laneNumber) * LANE_WIDTH);
                 car.setRotate(270);
+                break;
+        }
+    }
+
+    private void positionPed(ImageView pedestrian, Bearing bearing, boolean firstCrosswalk) {
+        double intersectionLeft = (WINDOW_WIDTH - ROAD_WIDTH) / 2.0;
+        double intersectionRight = intersectionLeft + ROAD_WIDTH;
+        double intersectionTop = (WINDOW_HEIGHT - ROAD_WIDTH) / 2.0;
+        double intersectionBottom = intersectionTop + ROAD_WIDTH;
+
+        //starting position
+        switch (bearing) {
+            case North:
+                double northX;
+
+                if(firstCrosswalk) {
+                    northX = intersectionLeft - STOPLINE_WIDTH * 2;
+                }
+
+                else {
+                    northX = intersectionRight + (CROSSWALK_WIDTH / 2) + STOPLINE_WIDTH;
+                }
+
+                pedestrian.setX(northX);
+
+                pedestrian.setY(WINDOW_HEIGHT);
+
+                pedestrian.setRotate(0);
+
+                break;
+
+            case South:
+                double southX;
+
+                if (firstCrosswalk) {
+                    southX = intersectionLeft - CROSSWALK_WIDTH;
+                }
+
+                else {
+                    southX = intersectionRight;
+                }
+
+                pedestrian.setX(southX);
+
+                pedestrian.setY(-LANE_WIDTH);
+
+                pedestrian.setRotate(180);
+                break;
+
+            case East:
+                double eastY;
+
+                if (firstCrosswalk) {
+                    eastY = intersectionTop - STOPLINE_WIDTH * 2;
+                }
+
+                else {
+                    eastY = intersectionBottom + CROSSWALK_WIDTH - STOPLINE_WIDTH * 2;
+                }
+
+                pedestrian.setX(-LANE_WIDTH);
+
+                pedestrian.setY(eastY);
+
+                pedestrian.setRotate(90);
+
+                break;
+
+            case West:
+                double westY;
+
+                if (firstCrosswalk) {
+                    westY = intersectionTop - CROSSWALK_WIDTH;
+                }
+
+                else {
+                    westY = intersectionBottom;
+                }
+
+                pedestrian.setX(WINDOW_WIDTH);
+
+                pedestrian.setY(westY);
+
+                pedestrian.setRotate(270);
                 break;
         }
     }
@@ -1422,6 +1584,57 @@ public class GUIMain{
 
         //store timeline for car
         carVisual.setTimeline(timeline);
+
+        timeline.play();
+    }
+
+    private void movePedestrian(PedestrianVisual pedestrianVisual, Bearing bearing) {
+        ImageView pedestrian = pedestrianVisual.getImageView();
+
+        Timeline timeline = new Timeline(new KeyFrame(Duration.millis(16), event -> {
+            switch(bearing) {
+                case North:
+                    pedestrian.setY(pedestrian.getY() - pedestrianVisual.getSpeed());
+                    break;
+
+                case South:
+                    pedestrian.setY(pedestrian.getY() + pedestrianVisual.getSpeed());
+                    break;
+
+                case East:
+                    pedestrian.setX(pedestrian.getX() + pedestrianVisual.getSpeed());
+                    break;
+
+                case West:
+                    pedestrian.setX(pedestrian.getX() - pedestrianVisual.getSpeed());
+                    break;
+            }
+
+            pedestrianVisual.nextFrame(pedestrianVisual.getSpeed());
+
+            boolean leftScreen = switch (bearing) {
+
+                case North -> pedestrian.getY() + pedestrian.getFitHeight() < 0;
+
+                case South -> pedestrian.getY() > WINDOW_HEIGHT;
+
+                case East -> pedestrian.getX() > WINDOW_WIDTH;
+
+                case West -> pedestrian.getX() + pedestrian.getFitWidth() < 0;
+            };
+
+            //remove pedestrian after leaving screen
+            if (leftScreen) {
+
+                removePedestrian(pedestrianVisual);
+                System.out.println("Pedestrian has beedn removed.");
+
+            }
+        }));
+
+        timeline.setCycleCount(Timeline.INDEFINITE);
+
+        pedestrianVisual.setTimeline(timeline);
 
         timeline.play();
     }
@@ -1847,6 +2060,74 @@ public class GUIMain{
 
         public LanePosition getLanePosition() {
             return lanePosition;
+        }
+    }
+
+    //pedestrian visuals
+    private static class PedestrianVisual {
+        private final ImageView imageView;
+        private final ArrayList<Image> walkingFrames; //walking animation
+
+        private final double speed;
+
+        private double distanceSinceLastFrame = 0;
+
+        private int currentFrame = 0;
+
+        private Timeline timeline;
+
+        public PedestrianVisual(ImageView imageView, ArrayList<Image> walkingFrames, double speed) {
+            this.imageView = imageView;
+            this.walkingFrames = walkingFrames;
+            this.speed = speed;
+        }
+
+        public ImageView getImageView() {
+            return imageView;
+        }
+
+        public double getSpeed() {
+            return speed;
+        }
+
+        public int getCurrentFrame() {
+            return currentFrame;
+        }
+
+        //next walking frame
+        public void nextFrame(double distanceMoved) {
+            distanceSinceLastFrame += distanceMoved;
+
+            //change animation frame every 8 pixels traveled
+            double frameDistance = 8.0;
+
+            if(distanceSinceLastFrame >= frameDistance) {
+                distanceSinceLastFrame -= frameDistance;
+
+                currentFrame++;
+
+                if(currentFrame >= walkingFrames.size()) {
+                    currentFrame = 0;
+                }
+
+                //change image
+                imageView.setImage(walkingFrames.get(currentFrame));
+            }
+
+        }
+
+        public Timeline getTimeline() {
+            return timeline;
+        }
+
+        public void setTimeline(Timeline timeline) {
+            this.timeline = timeline;
+        }
+
+        public void stopAnimation() {
+            if(timeline != null) {
+                timeline.stop();
+            }
         }
     }
 }

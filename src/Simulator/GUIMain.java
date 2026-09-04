@@ -240,11 +240,11 @@ public class GUIMain{
         trafficSlider.setMinorTickCount(0);
         trafficSlider.setSnapToTicks(true);
 
-        trafficSlider.valueProperty().addListener((_, _, newValue) -> {
+        trafficSlider.valueProperty().addListener((obsVal, oldVal, newValue) -> {
             setTraffic(newValue.intValue());
         });
 
-        spawnCarButton.setOnAction(_ -> {
+        spawnCarButton.setOnAction(event -> {
             spawnCar(false);
 
             //cool down between spawns
@@ -252,14 +252,14 @@ public class GUIMain{
 
             PauseTransition cooldown = new PauseTransition(Duration.seconds(3));
 
-            cooldown.setOnFinished(_ -> {
+            cooldown.setOnFinished(nxtEvent -> {
                 spawnCarButton.setDisable(false);
             });
 
             cooldown.play();
         });
 
-        spawnEMSButton.setOnAction(_ -> {
+        spawnEMSButton.setOnAction(event -> {
             spawnCar(true);
             setEMSIndicator(true);
 
@@ -268,14 +268,14 @@ public class GUIMain{
 
             PauseTransition cooldown = new PauseTransition(Duration.seconds(3));
 
-            cooldown.setOnFinished(_ -> {
+            cooldown.setOnFinished(nxtEvent -> {
                 spawnEMSButton.setDisable(false);
             });
 
             cooldown.play();
         });
 
-        clearAllCars.setOnAction(_ -> {
+        clearAllCars.setOnAction(event -> {
             for(CarVisual car : new ArrayList<>(cars)) {
                 removeCar(car);
             }
@@ -1244,7 +1244,7 @@ public class GUIMain{
 
         ImageView car = carVisual.imageView;
 
-        Timeline timeline = new Timeline(new KeyFrame(Duration.millis(16), _ -> {
+        Timeline timeline = new Timeline(new KeyFrame(Duration.millis(16), event -> {
             Bearing bearing = carVisual.car.getBearing();
 
             CarVisual carAhead = getCarAhead(carVisual);

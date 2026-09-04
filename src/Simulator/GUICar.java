@@ -5,7 +5,7 @@ public class GUICar {
     private Bearing myBearing;
     private int ID;
     private boolean isAlive = true;
-    private int laneID; //TODO will need to standardise laneNumber
+    private LanePosition lanePosition; //TODO will need to standardise laneNumber
     private double distance;
     private GUIIntersection intersection;
 
@@ -16,12 +16,12 @@ public class GUICar {
     private boolean isEMS;
 
 
-    public GUICar(int ID, GUILane myLane, Bearing myBearing, int laneID, GUIIntersection intersection, boolean isEMS) {
+    public GUICar(int ID, GUILane myLane, Bearing myBearing, LanePosition lanePosition, GUIIntersection intersection, boolean isEMS) {
         this.ID = ID;
         this.myLane = myLane;
         this.myBearing = myBearing;
         this.distance = 0;
-        this.laneID = laneID;
+        this.lanePosition = lanePosition;
         this.intersection = intersection;
         this.isEMS = isEMS;
     }
@@ -87,7 +87,7 @@ public class GUICar {
 
         if (sensorActive) {
 
-            myLane.updateSensor(laneID, false);
+            myLane.updateSensor(0, false);
 
             sensorActive = false;
         }

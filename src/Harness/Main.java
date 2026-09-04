@@ -42,7 +42,7 @@ public class Main {
                         System.out.println("Format:");
                         System.out.println("SET_LIGHT_STATE:lightID:color:shape:position");
                         System.out.println("Example:");
-                        System.out.println("SET_LIGHT_STATE:2:Green:Circle:North");
+                        System.out.println("SET_LIGHT_STATE:2:Green:Square:North");
                         System.out.print("> ");
                         String lightCommand = scanner.nextLine().trim();
                         try {

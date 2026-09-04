@@ -3,14 +3,14 @@ package Simulator;
 import java.util.ArrayList;
 
 public class GUILane {
-    private int ID;
+    private LanePosition lanePosition;
     private Bearing bearing;
     private ArrayList<GUILight> myLights = new ArrayList<>();
     private ArrayList<GUISensor> mySensors = new ArrayList<>();
 
 
-    public GUILane(int ID, Bearing bearing) {
-        this.ID = ID;
+    public GUILane(LanePosition lanePosition, Bearing bearing) {
+        this.lanePosition = lanePosition;
         this.bearing = bearing;
 
         makeLights();
@@ -43,12 +43,10 @@ public class GUILane {
         theLight.changeColor(Color);
     }
 
-    // Get this lane's ID
-    public int getID() {
-
-        return ID;
+    //get lane position
+    public LanePosition getLanePosition() {
+        return lanePosition;
     }
-
 
     // Get this lane's direction
     public Bearing getBearing() {

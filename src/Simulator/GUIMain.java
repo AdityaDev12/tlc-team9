@@ -155,23 +155,13 @@ public class GUIMain{
             double x = intersectionLeft + (lane * LANE_WIDTH) + (LANE_WIDTH / 2.0) + (ROAD_WIDTH / 2);
             double y = intersectionBottom + LINE_LENGTH - (STOPLINE_WIDTH * 3) + CROSSWALK_OFFSET * 3;
 
-            LightShape shape;
+            LightShape shape = switch (lane) {
+                case 0 -> LightShape.LeftArrow;
+                case 2 -> LightShape.RightArrow;
+                default -> LightShape.Square;
+            };
 
-            switch(lane) {
-                case 0:
-                    shape = LightShape.LeftArrow;
-                    break;
-
-                case 2:
-                    shape = LightShape.RightArrow;
-                    break;
-
-                default:
-                    shape = LightShape.Square;
-                    break;
-            }
-
-            drawTrafficLight(x, y, Bearing.North, lane == 0, shape);
+            drawTrafficLight(x, y, Bearing.North, shape);
         }
 
         //southbound traffic lights
@@ -179,23 +169,13 @@ public class GUIMain{
             double x = intersectionLeft + (lane * LANE_WIDTH) + (LANE_WIDTH / 2.0);
             double y = intersectionTop - LINE_LENGTH + STOPLINE_WIDTH * 2;
 
-            LightShape shape;
+            LightShape shape = switch (lane) {
+                case 0 -> LightShape.RightArrow;
+                case 2 -> LightShape.LeftArrow;
+                default -> LightShape.Square;
+            };
 
-            switch(lane) {
-                case 0:
-                    shape = LightShape.RightArrow;
-                    break;
-
-                case 2:
-                    shape = LightShape.LeftArrow;
-                    break;
-
-                default:
-                    shape = LightShape.Square;
-                    break;
-            }
-
-            drawTrafficLight(x, y, Bearing.South, lane == 2, shape);
+            drawTrafficLight(x, y, Bearing.South, shape);
         }
 
         //westbound traffic lights
@@ -203,23 +183,13 @@ public class GUIMain{
             double x = intersectionRight + LINE_LENGTH - (STOPLINE_WIDTH * 3) + CROSSWALK_OFFSET * 3;
             double y = intersectionTop + (lane * LANE_WIDTH) + (LANE_WIDTH / 2.0);
 
-            LightShape shape;
+            LightShape shape = switch (lane) {
+                case 0 -> LightShape.RightArrow;
+                case 2 -> LightShape.LeftArrow;
+                default -> LightShape.Square;
+            };
 
-            switch(lane) {
-                case 0:
-                    shape = LightShape.RightArrow;
-                    break;
-
-                case 2:
-                    shape = LightShape.LeftArrow;
-                    break;
-
-                default:
-                    shape = LightShape.Square;
-                    break;
-            }
-
-            drawTrafficLight(x, y, Bearing.West, lane == 2, shape);
+            drawTrafficLight(x, y, Bearing.West, shape);
         }
 
         //eastbound traffic lights
@@ -227,23 +197,13 @@ public class GUIMain{
             double x = intersectionLeft - LINE_LENGTH + STOPLINE_WIDTH * 2;
             double y = intersectionTop + (lane * LANE_WIDTH) + (ROAD_WIDTH / 2) + (LANE_WIDTH / 2.0);
 
-            LightShape shape;
+            LightShape shape = switch (lane) {
+                case 0 -> LightShape.LeftArrow;
+                case 2 -> LightShape.RightArrow;
+                default -> LightShape.Square;
+            };
 
-            switch(lane) {
-                case 0:
-                    shape = LightShape.LeftArrow;
-                    break;
-
-                case 2:
-                    shape = LightShape.RightArrow;
-                    break;
-
-                default:
-                    shape = LightShape.Square;
-                    break;
-            }
-
-            drawTrafficLight(x, y, Bearing.East, lane == 0, shape);
+            drawTrafficLight(x, y, Bearing.East, shape);
         }
 
         drawSensors();
@@ -404,26 +364,26 @@ public class GUIMain{
 
     //logic lanes
     private void createLanes() {
-        for (int lane = 0; lane < LANES_PER_DIRECTION; lane++) {
+        for (LanePosition lane : LanePosition.values()) {
             LaneList.add(new GUILane(lane, Bearing.North));
         }
 
 
-        for (int lane = 0; lane < LANES_PER_DIRECTION; lane++) {
-            LaneList.add(new GUILane(lane + 3, Bearing.South));
+        for (LanePosition lane : LanePosition.values()) {
+            LaneList.add(new GUILane(lane, Bearing.South));
         }
 
-        for (int lane = 0; lane < LANES_PER_DIRECTION; lane++) {
-            LaneList.add(new GUILane(lane + 6, Bearing.East));
+        for (LanePosition lane : LanePosition.values()) {
+            LaneList.add(new GUILane(lane, Bearing.East));
         }
 
-        for (int lane = 0; lane < LANES_PER_DIRECTION; lane++) {
-            LaneList.add(new GUILane(lane + 9, Bearing.West));
+        for (LanePosition lane : LanePosition.values()) {
+            LaneList.add(new GUILane(lane, Bearing.West));
         }
     }
 
     //returns the lane
-    private GUILane getLane(Bearing bearing, int laneNumber) {
+    private GUILane getLane(Bearing bearing, LanePosition lanePosition) {
 
         int directionIndex;
 
@@ -449,7 +409,10 @@ public class GUIMain{
                 return null;
         }
 
-        int laneIndex = directionIndex * LANES_PER_DIRECTION + laneNumber;
+        //convert position to its index
+        int laneIndexWithDirection = lanePosition.ordinal();
+
+        int laneIndex = directionIndex * LANES_PER_DIRECTION + laneIndexWithDirection;
 
         return LaneList.get(laneIndex);
     }
@@ -738,15 +701,15 @@ public class GUIMain{
     //lane markings
     private void drawArrowMarkings() {
         for (Bearing bearing : Bearing.values()) {
-            for(int i = 0; i < LANES_PER_DIRECTION; i++) {
-                drawArrow(bearing, i);
+            for(LanePosition lanePosition : LanePosition.values()) {
+                drawArrow(bearing, lanePosition);
             }
 
         }
     }
 
     //draw arrows
-    private void drawArrow(Bearing bearing, int laneNumber) {
+    private void drawArrow(Bearing bearing, LanePosition lanePosition) {
         double intersectionLeft = (WINDOW_WIDTH - ROAD_WIDTH) / 2;
         double intersectionRight = intersectionLeft + ROAD_WIDTH;
 
@@ -758,13 +721,15 @@ public class GUIMain{
 
         double rotation = 0;
 
+        int laneNumber = lanePosition.ordinal();
+
         Group arrow;
 
-        if(laneNumber == 0) {
+        if(lanePosition == LanePosition.Left) {
             arrow = createLeftTurnArrow();
         }
 
-        else if(laneNumber == 2) {
+        else if(lanePosition == LanePosition.Right) {
             arrow = createRightTurnArrow();
         }
 
@@ -1024,7 +989,7 @@ public class GUIMain{
     }
 
     //traffic light
-    private void drawTrafficLight(double x, double y, Bearing bearing, boolean leftTurn, LightShape shape) {
+    private void drawTrafficLight(double x, double y, Bearing bearing, LightShape shape) {
 
         //housing
         double housingSize = 30;
@@ -1225,38 +1190,43 @@ public class GUIMain{
 
 
         //update simulation logic
-        int laneID;
-
+        LanePosition lanePosition;
         switch (direction) {
 
-            case North:
-                laneID = lightID;
+            case North, East:
+                lanePosition = switch (lightID) {
+                    case 0 -> LanePosition.Right;
+                    case 1 -> LanePosition.Straight;
+                    case 2 -> LanePosition.Left;
+                    default -> null;
+                };
                 break;
 
-            case South:
-                laneID = 5 - lightID;
-                break;
-
-            case East:
-                laneID = lightID + 6;
-                break;
-
-            case West:
-                laneID = 11 - lightID;
+            case South, West:
+                lanePosition = switch (lightID) {
+                    case 0 -> LanePosition.Left;
+                    case 1 -> LanePosition.Straight;
+                    case 2 -> LanePosition.Right;
+                    default -> null;
+                };
                 break;
 
             default:
                 return;
         }
 
-        LaneList.get(laneID).updateLights(0, color);
+        GUILane lane = getLane(direction, lanePosition);
+
+        assert lane != null;
+        lane.updateLights(0, color);
+
 
 
         //update canMove for cars in that lane
         for (CarVisual carVisual : cars) {
 
             if (carVisual.getCurrentBearing() == direction
-                    && carVisual.getLaneNumber() == lightID) {
+                    && carVisual.getLanePosition() == lanePosition) {
 
                 carVisual.getCar().setCanMove(color == LightCol.Green);
             }
@@ -1267,9 +1237,9 @@ public class GUIMain{
         light.setCurrentColor(color);
     }
 
-    private void createCar(int id, GUILane lane, Bearing bearing, int laneNumber, boolean EMS) {
+    private void createCar(int id, GUILane lane, Bearing bearing, LanePosition lanePosition, boolean EMS) {
         //create the logic car
-        GUICar guiCar = new GUICar(id, lane, bearing, laneNumber, null, EMS); //TODO will need to standardise laneNumber
+        GUICar guiCar = new GUICar(id, lane, bearing, lanePosition, null, EMS);
         Image image;
 
         if(EMS) {
@@ -1287,7 +1257,7 @@ public class GUIMain{
         car.setFitWidth(LANE_WIDTH);
         car.setFitHeight(LANE_WIDTH);
 
-        positionCar(car, bearing, laneNumber);
+        positionCar(car, bearing, lanePosition);
 
         streetPane.getChildren().add(car);
         System.out.println("car has been created.");
@@ -1296,7 +1266,7 @@ public class GUIMain{
         double speed = MIN_CAR_SPEED + random.nextDouble() * (MAX_CAR_SPEED - MIN_CAR_SPEED);
 
         //connect logic car with visual
-        CarVisual carVisual = new CarVisual(guiCar, car, speed, laneNumber);
+        CarVisual carVisual = new CarVisual(guiCar, car, speed, lanePosition);
 
         //store car
         cars.add(carVisual);
@@ -1321,10 +1291,8 @@ public class GUIMain{
 
     //initial position
     //lane number starts at 0, left to right
-    private void positionCar(ImageView car, Bearing bearing, int laneNumber) {
-        if(laneNumber >= LANES_PER_DIRECTION) {
-            return;
-        }
+    private void positionCar(ImageView car, Bearing bearing, LanePosition lanePosition) {
+        int laneNumber = lanePosition.ordinal();
 
         //vertical road
         double roadLeft = (WINDOW_WIDTH - ROAD_WIDTH) / 2;
@@ -1480,7 +1448,7 @@ public class GUIMain{
 
 
             //must be in the same lane
-            if(otherCar.getLaneNumber() != carVisual.getLaneNumber()) {
+            if(otherCar.getLanePosition() != carVisual.getLanePosition()) {
                 continue;
             }
 
@@ -1609,7 +1577,7 @@ public class GUIMain{
         //traffic = 10; 750 ms between cars
         double spawnInterval = 3000.0 - (traffic - 1) * 250.0;
 
-        carSpawner = new Timeline(new KeyFrame(Duration.millis(spawnInterval), event -> {
+        carSpawner = new Timeline(new KeyFrame(Duration.millis(spawnInterval), _ -> {
             spawnCar(false);
         }));
 
@@ -1642,8 +1610,7 @@ public class GUIMain{
         Bearing bearing = Bearing.values()[random.nextInt(Bearing.values().length)];
 
         //random lane
-        //0, 1, or 2
-        int laneNumber = random.nextInt(LANES_PER_DIRECTION);
+        LanePosition lanePosition = LanePosition.values()[random.nextInt(LanePosition.values().length)];
 
         //check if there is already a car near this spawn point
         for (CarVisual carVisual : cars) {
@@ -1653,8 +1620,8 @@ public class GUIMain{
                 continue;
             }
 
-            //doesn't have the same lane number
-            if (carVisual.getLaneNumber() != laneNumber) {
+            //doesn't have the same lane position
+            if (carVisual.getLanePosition() != lanePosition) {
                 continue;
             }
 
@@ -1672,14 +1639,14 @@ public class GUIMain{
             };
 
             if (tooClose) {
-                System.out.println("TooClose");
+                System.out.println("Too Close");
                 return; //don't spawn car
             }
         }
 
-        GUILane lane = getLane(bearing, laneNumber);
+        GUILane lane = getLane(bearing, lanePosition);
 
-        createCar(nextCarID, lane, bearing, laneNumber, EMS);
+        createCar(nextCarID, lane, bearing, lanePosition, EMS);
 
         nextCarID++;
     }
@@ -1780,9 +1747,9 @@ public class GUIMain{
 
     //small private helper class to store traffic lights
     private static class TrafficLightVisual {
-        private Rectangle light;
-        private Polygon leftTurnArrow;
-        private Polygon rightTurnArrow;
+        private final Rectangle light;
+        private final Polygon leftTurnArrow;
+        private final Polygon rightTurnArrow;
 
         private Shape currentShape;
         private LightCol currentColor = LightCol.Red;
@@ -1826,18 +1793,18 @@ public class GUIMain{
         private final GUICar car;
         private final ImageView imageView;
         private double speed;
-        private double originalSpeed;
+        private final double originalSpeed;
         private Timeline timeline;
-        private int laneNumber;
+        private final LanePosition lanePosition;
 
         private Bearing currentBearing;
 
-        public CarVisual(GUICar car, ImageView imageView, double speed, int laneNumber) {
+        public CarVisual(GUICar car, ImageView imageView, double speed, LanePosition lanePosition) {
             this.car = car;
             this.imageView = imageView;
             this.speed = speed;
             this.originalSpeed = speed;
-            this.laneNumber = laneNumber;
+            this.lanePosition = lanePosition;
 
             this.currentBearing = car.getBearing();
         }
@@ -1878,8 +1845,8 @@ public class GUIMain{
             this.timeline = timeline;
         }
 
-        public int getLaneNumber() {
-            return laneNumber;
+        public LanePosition getLanePosition() {
+            return lanePosition;
         }
     }
 }

@@ -22,8 +22,6 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
-import java.lang.reflect.Array;
-import java.sql.Time;
 import java.util.*;
 
 /*
@@ -768,7 +766,7 @@ public class GUIMain{
                 arrow = createRightTurnArrow();
                 break;
 
-            case Straight:
+            case Middle:
                 arrow = createStraightArrow();
                 break;
 
@@ -1235,7 +1233,7 @@ public class GUIMain{
             case North, East:
                 lanePosition = switch (lightID) {
                     case 0 -> LanePosition.Right;
-                    case 1 -> LanePosition.Straight;
+                    case 1 -> LanePosition.Middle;
                     case 2 -> LanePosition.Left;
                     default -> null;
                 };
@@ -1244,7 +1242,7 @@ public class GUIMain{
             case South, West:
                 lanePosition = switch (lightID) {
                     case 0 -> LanePosition.Left;
-                    case 1 -> LanePosition.Straight;
+                    case 1 -> LanePosition.Middle;
                     case 2 -> LanePosition.Right;
                     default -> null;
                 };

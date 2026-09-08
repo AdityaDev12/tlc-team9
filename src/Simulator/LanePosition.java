@@ -2,6 +2,6 @@ package Simulator;
 
 public enum LanePosition {
     Right,
-    Straight,
+    Middle,
     Left
 }

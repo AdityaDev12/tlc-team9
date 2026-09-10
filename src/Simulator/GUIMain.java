@@ -1,6 +1,7 @@
 package Simulator;
 
 import javafx.animation.KeyFrame;
+import javafx.animation.PauseTransition;
 import javafx.animation.Timeline;
 import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
@@ -15,20 +16,13 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
-import javafx.scene.shape.Line;
-import javafx.scene.shape.Rectangle;
+import javafx.scene.shape.*;
 import javafx.scene.text.*;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
-import javax.print.attribute.standard.MediaSize;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-
-import java.util.Random;
+import java.util.*;
 
 /*
 creates all javafx visuals and animations
@@ -64,10 +58,11 @@ public class GUIMain{
     private static final double CROSSWALK_OFFSET = 5;
 
     private final ArrayList<GUILane> LaneList = new ArrayList<>();
-    private final ArrayList<GUICar> CarList = new ArrayList<>();
 
     //store traffic light visuals
-    private final ArrayList<TrafficLightVisual> trafficLights = new ArrayList<>();
+    private final Map<Bearing, ArrayList<TrafficLightVisual>> trafficLights = new EnumMap<>(Bearing.class);
+    private final ArrayList<PedestrianVisual> pedestrians = new ArrayList<>();
+
     private final ArrayList<PedLightVisual> pedLights = new ArrayList<>();
 
 
@@ -76,14 +71,35 @@ public class GUIMain{
 
     //list of car images
     private final List<String> carImages = List.of(
-            "/Audi.png",
-            "/Black_viper.png",
-            "/Car.png",
-            "/Mini_truck.png",
-            "/Mini_van.png",
-            "/Police.png",
-            "/taxi.png",
-            "/truck.png"
+            "/cars/Audi.png",
+            "/cars/Black_viper.png",
+            "/cars/Car.png",
+            "/cars/Mini_truck.png",
+            "/cars/Mini_van.png",
+            "/cars/Police.png",
+            "/cars/taxi.png",
+            "/cars/truck.png"
+    );
+
+    //list of pedestrians
+    private final List<List<String>> pedestrianImages = List.of(
+            List.of(
+                    "/pedestrians/person1_walk1.png",
+                    "/pedestrians/person1_walk2.png",
+                    "/pedestrians/person1_walk3.png"
+            ),
+
+            List.of(
+                    "/pedestrians/person3_walk1.png",
+                    "/pedestrians/person3_walk2.png",
+                    "/pedestrians/person3_walk3.png"
+            ),
+
+            List.of(
+                    "/pedestrians/person4_walk1.png",
+                    "/pedestrians/person4_walk2.png",
+                    "/pedestrians/person4_walk3.png"
+            )
     );
 
     //1 = low traffic, 10 = heavy traffic
@@ -97,6 +113,9 @@ public class GUIMain{
     private static final double MIN_CAR_SPEED = 1.0;
     private static final double MAX_CAR_SPEED = 4.0;
 
+    private Circle emsIndicator;
+    private Label emsLabel;
+
     public GUIMain(Stage primaryStage){
         this.primaryStage = primaryStage;
 
@@ -104,6 +123,11 @@ public class GUIMain{
 
         WINDOW_WIDTH = screenBounds.getWidth();
         WINDOW_HEIGHT = screenBounds.getHeight();
+
+        trafficLights.put(Bearing.North, new ArrayList<>());
+        trafficLights.put(Bearing.South, new ArrayList<>());
+        trafficLights.put(Bearing.East, new ArrayList<>());
+        trafficLights.put(Bearing.West, new ArrayList<>());
     }
 
     public void makeGUI() {
@@ -150,34 +174,58 @@ public class GUIMain{
 
         //northbound traffic lights
         for(int lane = 0; lane < LANES_PER_DIRECTION; lane++) {
-            double x = intersectionLeft + (lane * LANE_WIDTH) + (ROAD_WIDTH / 2);
-            double y = intersectionBottom + LINE_LENGTH - (STOPLINE_WIDTH * 3) + CROSSWALK_OFFSET;
+            double x = intersectionLeft + (lane * LANE_WIDTH) + (LANE_WIDTH / 2.0) + (ROAD_WIDTH / 2);
+            double y = intersectionBottom + LINE_LENGTH - (STOPLINE_WIDTH * 3) + CROSSWALK_OFFSET * 3;
 
-            drawTrafficLight(x, y, Bearing.North);
+            LightShape shape = switch (lane) {
+                case 0 -> LightShape.LeftArrow;
+                case 2 -> LightShape.RightArrow;
+                default -> LightShape.Square;
+            };
+
+            drawTrafficLight(x, y, Bearing.North, shape);
         }
 
         //southbound traffic lights
         for(int lane = 0; lane < LANES_PER_DIRECTION; lane++) {
-            double x = intersectionLeft + (lane * LANE_WIDTH);
-            double y = intersectionTop - LINE_LENGTH + STOPLINE_WIDTH;
+            double x = intersectionLeft + (lane * LANE_WIDTH) + (LANE_WIDTH / 2.0);
+            double y = intersectionTop - LINE_LENGTH + STOPLINE_WIDTH * 2;
 
-            drawTrafficLight(x, y, Bearing.South);
+            LightShape shape = switch (lane) {
+                case 0 -> LightShape.RightArrow;
+                case 2 -> LightShape.LeftArrow;
+                default -> LightShape.Square;
+            };
+
+            drawTrafficLight(x, y, Bearing.South, shape);
         }
 
         //westbound traffic lights
         for(int lane = 0; lane < LANES_PER_DIRECTION; lane++) {
-            double x = intersectionRight + LINE_LENGTH - (STOPLINE_WIDTH * 3) + CROSSWALK_OFFSET;
-            double y = intersectionTop + (lane * LANE_WIDTH);
+            double x = intersectionRight + LINE_LENGTH - (STOPLINE_WIDTH * 3) + CROSSWALK_OFFSET * 3;
+            double y = intersectionTop + (lane * LANE_WIDTH) + (LANE_WIDTH / 2.0);
 
-            drawTrafficLight(x, y, Bearing.West);
+            LightShape shape = switch (lane) {
+                case 0 -> LightShape.RightArrow;
+                case 2 -> LightShape.LeftArrow;
+                default -> LightShape.Square;
+            };
+
+            drawTrafficLight(x, y, Bearing.West, shape);
         }
 
         //eastbound traffic lights
         for(int lane = 0; lane < LANES_PER_DIRECTION; lane++) {
-            double x = intersectionLeft - LINE_LENGTH + STOPLINE_WIDTH;
-            double y = intersectionTop + (lane * LANE_WIDTH) + (ROAD_WIDTH / 2);
+            double x = intersectionLeft - LINE_LENGTH + STOPLINE_WIDTH * 2;
+            double y = intersectionTop + (lane * LANE_WIDTH) + (ROAD_WIDTH / 2) + (LANE_WIDTH / 2.0);
 
-            drawTrafficLight(x, y, Bearing.East);
+            LightShape shape = switch (lane) {
+                case 0 -> LightShape.LeftArrow;
+                case 2 -> LightShape.RightArrow;
+                default -> LightShape.Square;
+            };
+
+            drawTrafficLight(x, y, Bearing.East, shape);
         }
 
         drawSensors();
@@ -226,6 +274,7 @@ public class GUIMain{
 
         Button spawnCarButton = new Button("Spawn Car");
         Button spawnEMSButton = new Button("Spawn EMS");
+        Button spawnPedestrian = new Button("Spawn Person");
 
         Button clearAllCars = new Button("Clear All Cars");
 
@@ -235,16 +284,43 @@ public class GUIMain{
         trafficSlider.setMinorTickCount(0);
         trafficSlider.setSnapToTicks(true);
 
-        trafficSlider.valueProperty().addListener((obs, oldValue, newValue) -> {
+        trafficSlider.valueProperty().addListener((obsVal, oldVal, newValue) -> {
             setTraffic(newValue.intValue());
         });
 
         spawnCarButton.setOnAction(event -> {
             spawnCar(false);
+
+            //cool down between spawns
+            spawnCarButton.setDisable(true);
+
+            PauseTransition cooldown = new PauseTransition(Duration.seconds(3));
+
+            cooldown.setOnFinished(nxtEvent -> {
+                spawnCarButton.setDisable(false);
+            });
+
+            cooldown.play();
         });
 
         spawnEMSButton.setOnAction(event -> {
             spawnCar(true);
+            setEMSIndicator(true);
+
+            //cool down between spawns
+            spawnEMSButton.setDisable(true);
+
+            PauseTransition cooldown = new PauseTransition(Duration.seconds(3));
+
+            cooldown.setOnFinished(nxtEvent -> {
+                spawnEMSButton.setDisable(false);
+            });
+
+            cooldown.play();
+        });
+
+        spawnPedestrian.setOnAction(event -> {
+            spawnPedestrian();
         });
 
         clearAllCars.setOnAction(event -> {
@@ -258,42 +334,84 @@ public class GUIMain{
                 trafficSlider,
                 spawnCarButton,
                 spawnEMSButton,
+                spawnPedestrian,
                 clearAllCars
         );
 
         controls.setLayoutX(20);
         controls.setLayoutY(WINDOW_HEIGHT - 120);
 
+        createEMSIndicator();
+
         streetPane.getChildren().add(controls);
 
     }
 
+    //ems indicator
+    private void createEMSIndicator() {
+
+        emsIndicator = new Circle(8, Color.DARKGRAY);
+
+        emsLabel = new Label("EMS SIGNAL: NOT RECEIVED");
+        emsLabel.setTextFill(Color.WHITE);
+
+        HBox emsBox = new HBox(8);
+        emsBox.getChildren().addAll(emsIndicator, emsLabel);
+
+        emsBox.setLayoutX(20);
+        emsBox.setLayoutY(20);
+
+        streetPane.getChildren().add(emsBox);
+    }
+
+    //set ems indicator
+    private void setEMSIndicator(boolean received) {
+
+        if (received) {
+
+            emsIndicator.setFill(Color.LIMEGREEN);
+            emsLabel.setText("EMS SIGNAL: RECEIVED");
+
+            DropShadow glow = new DropShadow();
+            glow.setColor(Color.LIMEGREEN);
+            glow.setRadius(15);
+            glow.setSpread(0.5);
+
+            emsIndicator.setEffect(glow);
+
+        }
+
+        else {
+
+            emsIndicator.setFill(Color.DARKGRAY);
+            emsLabel.setText("EMS SIGNAL: NOT RECEIVED");
+
+            emsIndicator.setEffect(null);
+        }
+    }
+
     //logic lanes
     private void createLanes() {
-        for (int lane = 0; lane < LANES_PER_DIRECTION; lane++) {
+        for (LanePosition lane : LanePosition.values()) {
             LaneList.add(new GUILane(lane, Bearing.North));
         }
 
 
-        for (int lane = 0; lane < LANES_PER_DIRECTION; lane++) {
-            LaneList.add(new GUILane(lane + 3, Bearing.South));
+        for (LanePosition lane : LanePosition.values()) {
+            LaneList.add(new GUILane(lane, Bearing.South));
         }
 
-        for (int lane = 0; lane < LANES_PER_DIRECTION; lane++) {
-            LaneList.add(new GUILane(lane + 6, Bearing.East));
+        for (LanePosition lane : LanePosition.values()) {
+            LaneList.add(new GUILane(lane, Bearing.East));
         }
 
-        for (int lane = 0; lane < LANES_PER_DIRECTION; lane++) {
-            LaneList.add(new GUILane(lane + 9, Bearing.West));
+        for (LanePosition lane : LanePosition.values()) {
+            LaneList.add(new GUILane(lane, Bearing.West));
         }
-/*
-        for (GUILane lane : LaneList) {
-            lane.updateLights(0, LightCol.Green);
-        }*/
     }
 
     //returns the lane
-    private GUILane getLane(Bearing bearing, int laneNumber) {
+    private GUILane getLane(Bearing bearing, LanePosition lanePosition) {
 
         int directionIndex;
 
@@ -319,7 +437,10 @@ public class GUIMain{
                 return null;
         }
 
-        int laneIndex = directionIndex * LANES_PER_DIRECTION + laneNumber;
+        //convert position to its index
+        int laneIndexWithDirection = lanePosition.ordinal();
+
+        int laneIndex = directionIndex * LANES_PER_DIRECTION + laneIndexWithDirection;
 
         return LaneList.get(laneIndex);
     }
@@ -608,15 +729,15 @@ public class GUIMain{
     //lane markings
     private void drawArrowMarkings() {
         for (Bearing bearing : Bearing.values()) {
-            for(int i = 0; i < LANES_PER_DIRECTION; i++) {
-                drawArrow(bearing, i);
+            for(LanePosition lanePosition : LanePosition.values()) {
+                drawArrow(bearing, lanePosition);
             }
 
         }
     }
 
     //draw arrows
-    private void drawArrow(Bearing bearing, int laneNumber) {
+    private void drawArrow(Bearing bearing, LanePosition lanePosition) {
         double intersectionLeft = (WINDOW_WIDTH - ROAD_WIDTH) / 2;
         double intersectionRight = intersectionLeft + ROAD_WIDTH;
 
@@ -628,31 +749,42 @@ public class GUIMain{
 
         double rotation = 0;
 
+        int laneNumber = lanePosition.ordinal();
+
+        //Convert the logical lane position to the physical lane on screen
+        int physicalLaneNumber = LANES_PER_DIRECTION - 1 - laneNumber;
+
         Group arrow;
 
-        if(laneNumber == 0) {
-            arrow = createLeftTurnArrow();
-        }
+        switch (lanePosition) {
 
-        else if(laneNumber == 2) {
-            arrow = createRightTurnArrow();
-        }
+            case Left:
+                arrow = createLeftTurnArrow();
+                break;
 
-        else {
-            arrow = createStraightArrow();
+            case Right:
+                arrow = createRightTurnArrow();
+                break;
+
+            case Middle:
+                arrow = createStraightArrow();
+                break;
+
+            default:
+                return;
         }
 
         //position and rotate the arrows based on the direction of travel
         switch(bearing) {
             case North:
-                x = intersectionLeft + (LANES_PER_DIRECTION + laneNumber) * LANE_WIDTH + LANE_WIDTH / 2.0;
+                x = intersectionLeft + (LANES_PER_DIRECTION + physicalLaneNumber) * LANE_WIDTH + LANE_WIDTH / 2.0;
                 y = intersectionBottom + CROSSWALK_WIDTH + CROSSWALK_OFFSET + STOPLINE_WIDTH * 3;
 
                 rotation = 0;
                 break;
 
             case South:
-                x = intersectionLeft + (LANES_PER_DIRECTION - 1 - laneNumber) * LANE_WIDTH + LANE_WIDTH / 2.0;
+                x = intersectionLeft + (LANES_PER_DIRECTION - 1 - physicalLaneNumber) * LANE_WIDTH + LANE_WIDTH / 2.0;
                 y = intersectionTop - CROSSWALK_WIDTH - CROSSWALK_OFFSET - STOPLINE_WIDTH * 3;
 
                 rotation = 180;
@@ -660,14 +792,14 @@ public class GUIMain{
 
             case East:
                 x = intersectionLeft - CROSSWALK_WIDTH - CROSSWALK_OFFSET - STOPLINE_WIDTH * 3;
-                y = intersectionTop + (LANES_PER_DIRECTION + laneNumber) * LANE_WIDTH + LANE_WIDTH / 2.0;
+                y = intersectionTop + (LANES_PER_DIRECTION + physicalLaneNumber) * LANE_WIDTH + LANE_WIDTH / 2.0;
 
                 rotation = 90;
                 break;
 
             case West:
                 x = intersectionRight + CROSSWALK_WIDTH + CROSSWALK_OFFSET + STOPLINE_WIDTH * 3;
-                y = intersectionTop + (LANES_PER_DIRECTION - 1 - laneNumber) * LANE_WIDTH +  LANE_WIDTH / 2.0;
+                y = intersectionTop + (LANES_PER_DIRECTION - 1 - physicalLaneNumber) * LANE_WIDTH +  LANE_WIDTH / 2.0;
 
                 rotation = 270;
                 break;
@@ -894,143 +1026,261 @@ public class GUIMain{
     }
 
     //traffic light
-    private void drawTrafficLight(double x, double y, Bearing bearing) {
-        //size of housing
-        double height = 25;
+    private void drawTrafficLight(double x, double y, Bearing bearing, LightShape shape) {
 
-        //gap between the lights and housing
-        double gap = 0.6;
+        //housing
+        double housingSize = 30;
 
-        //light radius
-        double radius = height * 0.4;
+        double lightSize = 20;
 
-        //light circumference
-        double circumference = 2 * radius;
+        //center light inside housing
+        double lightX = x - lightSize / 2;
+        double lightY = y - lightSize / 2;
 
-        Rectangle housing;
-
-        Circle redLight;
-        Circle yellowLight;
-        Circle greenLight;
-
-        if(bearing == Bearing.East || bearing == Bearing.West) {
-            //housing for lights
-            housing = new Rectangle(x, y, height, LANE_WIDTH);
-
-            //round the corners
-            housing.setArcWidth(housing.getWidth() * 0.8);
-            housing.setArcHeight(housing.getHeight() * 0.3333);
-
-            //traffic lights
-            if(bearing == Bearing.West) {
-                redLight = new Circle(x + 12.5, y + 10 + (2 * circumference) + gap, radius);
-                greenLight = new Circle(x + 12.5, y + 10 + gap, radius);
-            }
-
-            else {
-                redLight = new Circle(x + 12.5, y + 10 + gap, radius);
-                greenLight = new Circle(x + 12.5, y + 10 + (2 * circumference) + gap, radius);
-            }
-
-            yellowLight = new Circle(x + 12.5, y + 10 + circumference + gap, radius);
-
-            //inactiveColors
-            Color inactiveRed = Color.rgb(80, 20, 20);
-            Color inactiveYellow = Color.rgb(80, 70, 20);
-            Color inactiveGreen = Color.rgb(20, 70, 30);
-
-            //initial colors
-            redLight.setFill(Color.RED);
-            yellowLight.setFill(inactiveYellow);
-            greenLight.setFill(inactiveGreen);
-        }
-
-        else {
-            //housing for lights
-            housing = new Rectangle(x, y, LANE_WIDTH, height);
-
-            //round the corners
-            housing.setArcWidth(housing.getWidth() * 0.3333);
-            housing.setArcHeight(housing.getHeight() * 0.8);
-
-            //traffic lights
-            if(bearing == Bearing.South) {
-                redLight = new Circle(x + 10 + (2 * circumference) + gap, y + 12.5, radius);
-                greenLight = new Circle(x + 10 + gap, y + 12.5, radius);
-            }
-
-            else {
-                redLight = new Circle(x + 10 + gap, y + 12.5, radius);
-                greenLight = new Circle(x + 10 + (2 * circumference) + gap, y + 12.5, radius);
-            }
-
-            yellowLight = new Circle(x + 10 + circumference + gap, y + 12.5, radius);
-
-            //inactiveColors
-            Color inactiveRed = Color.rgb(80, 20, 20);
-            Color inactiveYellow = Color.rgb(80, 70, 20);
-            Color inactiveGreen = Color.rgb(20, 70, 30);
-
-            //initial colors
-            redLight.setFill(Color.RED);
-            yellowLight.setFill(inactiveYellow);
-            greenLight.setFill(inactiveGreen);
-        }
+        Rectangle housing = new Rectangle(
+                x - housingSize / 2,
+                y - housingSize / 2, housingSize, housingSize);
 
         housing.setFill(Color.BLACK);
 
-        streetPane.getChildren().addAll(housing, redLight, yellowLight, greenLight);
+        housing.setArcWidth(0);
+        housing.setArcHeight(0);
 
-        //store traffic lights to change them later
-        trafficLights.add(new TrafficLightVisual(redLight, yellowLight, greenLight));
+        //streetPane.getChildren().add(housing);
 
-    }
+        Polygon leftArrow = new Polygon();
+        leftArrow.getPoints().addAll(
+                x - 8.0, y + 5.0,
+                x - 8.0, y - 3.0,
+                x - 2.0, y - 3.0,
+                x - 2.0, y - 9.0,
+                x + 8.0, y,
+                x - 2.0, y + 9.0,
+                x - 2.0, y + 3.0,
+                x - 8.0, y + 3.0
+        );
 
-    public void changeLight(int LaneID, int LightID, LightCol Color){
-        GUILane theLane = LaneList.get(LaneID);
-        theLane.updateLights(LightID, Color);
+        leftArrow.setFill(Color.RED);
+
+        Polygon rightArrow = new Polygon();
+        rightArrow.getPoints().addAll(
+                x + 8.0, y + 5.0,
+                x + 8.0, y - 3.0,
+                x + 2.0, y - 3.0,
+                x + 2.0, y - 9.0,
+                x - 8.0, y,
+                x + 2.0, y + 9.0,
+                x + 2.0, y + 3.0,
+                x + 8.0, y + 3.0
+        );
+
+        rightArrow.setFill(Color.RED);
+
+        Rectangle light = new Rectangle(lightX, lightY, lightSize, lightSize);
+
+        light.setArcWidth(0);
+        light.setArcHeight(0);
+
+        //initial color
+        light.setFill(Color.RED);
+
+        //rotate arrow for the direction of traffic
+        switch (bearing) {
+
+            case North:
+                leftArrow.setRotate(180);
+                rightArrow.setRotate(180);
+                break;
+
+            case South:
+                leftArrow.setRotate(0);
+                rightArrow.setRotate(0);
+                break;
+
+            case East:
+                leftArrow.setRotate(270);
+                rightArrow.setRotate(270);
+                break;
+
+            case West:
+                leftArrow.setRotate(90);
+                rightArrow.setRotate(90);
+                break;
+        }
+
+        light.setVisible(false);
+        leftArrow.setVisible(false);
+        rightArrow.setVisible(false);
+
+        switch(shape) {
+            case LeftArrow:
+                leftArrow.setVisible(true);
+                break;
+
+            case RightArrow:
+                rightArrow.setVisible(true);
+                break;
+
+            case Square:
+                light.setVisible(true);
+                break;
+        }
+
+        streetPane.getChildren().addAll(housing, light, leftArrow, rightArrow);
+        trafficLights.get(bearing).add(new TrafficLightVisual(light, leftArrow, rightArrow));
     }
 
     //change traffic light colors
-    public void changeTrafficLight(int lightID, LightCol color) {
-        //inactiveColors
-        Color inactiveRed = Color.rgb(80, 20, 20);
-        Color inactiveYellow = Color.rgb(80, 70, 20);
-        Color inactiveGreen = Color.rgb(20, 70, 30);
+    public void changeTrafficLight(int lightID, LightCol color, LightShape shape, Bearing direction) {
+        //find light associated with directional group
+        ArrayList<TrafficLightVisual> directionalLights = trafficLights.get(direction);
 
-        TrafficLightVisual light = trafficLights.get(lightID);
+        if (directionalLights == null) {
+            System.err.println("ERROR[GUIMain]: No lights found for direction: " + direction);
+            return;
+        }
+        if (lightID < 0 || lightID >= directionalLights.size()) {
+            System.err.println("ERROR[GUIMain]: Invalid light ID " + lightID + " for direction " + direction);
+            return;
+        }
+        TrafficLightVisual light = directionalLights.get(lightID);
 
-        //turn off all lights
-        light.redLight.setFill(inactiveRed);
-        light.yellowLight.setFill(inactiveYellow);
-        light.greenLight.setFill(inactiveGreen);
+        //hide every shape
+        if(light.getLight() != null) {
+            light.getLight().setVisible(false);
+        }
 
-        //turn on requested light
-        switch(color) {
-            case Red:
-                light.redLight.setFill(Color.RED);
+        if(light.getLeftTurnArrow() != null) {
+            light.getLeftTurnArrow().setVisible(false);
+        }
+
+        if(light.getRightTurnArrow() != null) {
+            light.getRightTurnArrow().setVisible(false);
+        }
+        System.out.println("Shape received: " + shape);
+        //change traffic lights based on shape
+        switch (shape) {
+            case LeftArrow:
+                if(light.getLeftTurnArrow() != null) {
+                    light.getLeftTurnArrow().setVisible(true);
+
+                    switch (color) {
+
+                        case Red:
+                            light.getLeftTurnArrow().setFill(Color.RED);
+                            break;
+
+                        case Yellow:
+                            light.getLeftTurnArrow().setFill(Color.YELLOW);
+                            break;
+
+                        case Green:
+                            light.getLeftTurnArrow().setFill(Color.GREEN);
+                            break;
+                    }
+                }
+
                 break;
 
-            case Yellow:
-                light.yellowLight.setFill(Color.YELLOW);
+            case RightArrow:
+                if(light.getRightTurnArrow() != null) {
+                    light.getRightTurnArrow().setVisible(true);
+
+                    switch (color) {
+
+                        case Red:
+                            light.getRightTurnArrow().setFill(Color.RED);
+                            break;
+
+                        case Yellow:
+                            light.getRightTurnArrow().setFill(Color.YELLOW);
+                            break;
+
+                        case Green:
+                            light.getRightTurnArrow().setFill(Color.GREEN);
+                            break;
+                    }
+                }
+
                 break;
 
-            case Green:
-                light.greenLight.setFill(Color.GREEN);
+            case Square:
+                if(light.getLight() != null) {
+                    light.getLight().setVisible(true);
+                    switch(color) {
+                        case Red:
+                            light.getLight().setFill(Color.RED);
+                            break;
+
+                        case Yellow:
+                            light.getLight().setFill(Color.YELLOW);
+                            break;
+
+                        case Green:
+                            light.getLight().setFill(Color.GREEN);
+                            break;
+                    }
+                }
+
                 break;
         }
+
+
+        //update simulation logic
+        LanePosition lanePosition;
+        switch (direction) {
+
+            case North, East:
+                lanePosition = switch (lightID) {
+                    case 0 -> LanePosition.Right;
+                    case 1 -> LanePosition.Middle;
+                    case 2 -> LanePosition.Left;
+                    default -> null;
+                };
+                break;
+
+            case South, West:
+                lanePosition = switch (lightID) {
+                    case 0 -> LanePosition.Left;
+                    case 1 -> LanePosition.Middle;
+                    case 2 -> LanePosition.Right;
+                    default -> null;
+                };
+                break;
+
+            default:
+                return;
+        }
+
+        GUILane lane = getLane(direction, lanePosition);
+
+        assert lane != null;
+        lane.updateLights(0, color);
+
+
+
+        //update canMove for cars in that lane
+        for (CarVisual carVisual : cars) {
+
+            if (carVisual.getCurrentBearing() == direction
+                    && carVisual.getLanePosition() == lanePosition) {
+
+                carVisual.getCar().setCanMove(color == LightCol.Green);
+            }
+        }
+
 
         //store logic state
         light.setCurrentColor(color);
     }
 
-    private void createCar(int id, GUILane lane, Bearing bearing, int laneNumber, boolean EMS) {
+    private void createCar(int id, GUILane lane, Bearing bearing, LanePosition lanePosition, boolean EMS) {
         //create the logic car
-        GUICar guiCar = new GUICar(id, lane, bearing, laneNumber, null); //TODO will need to standardise laneNumber
+        GUICar guiCar = new GUICar(id, lane, bearing, lanePosition, null, EMS);
         Image image;
 
         if(EMS) {
-            image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/Ambulance.png")));
+            image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/cars/Ambulance.png")));
         }
 
         else {
@@ -1044,7 +1294,7 @@ public class GUIMain{
         car.setFitWidth(LANE_WIDTH);
         car.setFitHeight(LANE_WIDTH);
 
-        positionCar(car, bearing, laneNumber);
+        positionCar(car, bearing, lanePosition);
 
         streetPane.getChildren().add(car);
         System.out.println("car has been created.");
@@ -1053,12 +1303,54 @@ public class GUIMain{
         double speed = MIN_CAR_SPEED + random.nextDouble() * (MAX_CAR_SPEED - MIN_CAR_SPEED);
 
         //connect logic car with visual
-        CarVisual carVisual = new CarVisual(guiCar, car, speed, laneNumber);
+        CarVisual carVisual = new CarVisual(guiCar, car, speed, lanePosition);
 
         //store car
         cars.add(carVisual);
 
         moveCar(carVisual);
+
+        checkEMS();
+    }
+
+    //create pedestrians
+    private void spawnPedestrian() {
+        List<String> selectedPedestrian = pedestrianImages.get(random.nextInt(pedestrianImages.size()));
+
+        ArrayList<Image> walkingFrames = new ArrayList<>();
+
+        for(String imagePath : selectedPedestrian) {
+            walkingFrames.add(new Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath))));
+        }
+
+        ImageView pedestrian = new ImageView(walkingFrames.getFirst());
+
+        pedestrian.setFitWidth(30);
+        pedestrian.setFitHeight(30);
+        pedestrian.setPreserveRatio(true);
+
+        Bearing bearing = Bearing.values()[random.nextInt(Bearing.values().length)];
+
+        boolean firstCrosswalk = random.nextBoolean(); //randomly chooses what crosswalk to use
+
+        positionPed(pedestrian, bearing, firstCrosswalk);
+
+        double speed = 1.0;
+
+        PedestrianVisual pedestrianVisual =
+                new PedestrianVisual(
+                        pedestrian,
+                        walkingFrames,
+                        speed
+        );
+
+        streetPane.getChildren().add(pedestrian);
+
+        System.out.println("Pedestrian has been created.");
+
+        pedestrians.add(pedestrianVisual);
+
+        movePedestrian(pedestrianVisual, bearing);
     }
 
     //remove car
@@ -1070,14 +1362,22 @@ public class GUIMain{
 
         streetPane.getChildren().remove(carVisual.getImageView());
         cars.remove(carVisual);
+
+        checkEMS();
+    }
+
+    private void removePedestrian(PedestrianVisual pedestrianVisual) {
+        pedestrianVisual.stopAnimation();
+
+        streetPane.getChildren().remove(pedestrianVisual.getImageView());
+
+        pedestrians.remove(pedestrianVisual);
     }
 
     //initial position
     //lane number starts at 0, left to right
-    private void positionCar(ImageView car, Bearing bearing, int laneNumber) {
-        if(laneNumber >= LANES_PER_DIRECTION) {
-            return;
-        }
+    private void positionCar(ImageView car, Bearing bearing, LanePosition lanePosition) {
+        int laneNumber = lanePosition.ordinal();
 
         //vertical road
         double roadLeft = (WINDOW_WIDTH - ROAD_WIDTH) / 2;
@@ -1122,6 +1422,90 @@ public class GUIMain{
         }
     }
 
+    private void positionPed(ImageView pedestrian, Bearing bearing, boolean firstCrosswalk) {
+        double intersectionLeft = (WINDOW_WIDTH - ROAD_WIDTH) / 2.0;
+        double intersectionRight = intersectionLeft + ROAD_WIDTH;
+        double intersectionTop = (WINDOW_HEIGHT - ROAD_WIDTH) / 2.0;
+        double intersectionBottom = intersectionTop + ROAD_WIDTH;
+
+        //starting position
+        switch (bearing) {
+            case North:
+                double northX;
+
+                if(firstCrosswalk) {
+                    northX = intersectionLeft - STOPLINE_WIDTH * 2;
+                }
+
+                else {
+                    northX = intersectionRight + (CROSSWALK_WIDTH / 2) + STOPLINE_WIDTH;
+                }
+
+                pedestrian.setX(northX);
+
+                pedestrian.setY(WINDOW_HEIGHT);
+
+                pedestrian.setRotate(0);
+
+                break;
+
+            case South:
+                double southX;
+
+                if (firstCrosswalk) {
+                    southX = intersectionLeft - CROSSWALK_WIDTH;
+                }
+
+                else {
+                    southX = intersectionRight;
+                }
+
+                pedestrian.setX(southX);
+
+                pedestrian.setY(-LANE_WIDTH);
+
+                pedestrian.setRotate(180);
+                break;
+
+            case East:
+                double eastY;
+
+                if (firstCrosswalk) {
+                    eastY = intersectionTop - STOPLINE_WIDTH * 2;
+                }
+
+                else {
+                    eastY = intersectionBottom + CROSSWALK_WIDTH - STOPLINE_WIDTH * 2;
+                }
+
+                pedestrian.setX(-LANE_WIDTH);
+
+                pedestrian.setY(eastY);
+
+                pedestrian.setRotate(90);
+
+                break;
+
+            case West:
+                double westY;
+
+                if (firstCrosswalk) {
+                    westY = intersectionTop - CROSSWALK_WIDTH;
+                }
+
+                else {
+                    westY = intersectionBottom;
+                }
+
+                pedestrian.setX(WINDOW_WIDTH);
+
+                pedestrian.setY(westY);
+
+                pedestrian.setRotate(270);
+                break;
+        }
+    }
+
     //animation to move the car
     private void moveCar(CarVisual carVisual) {
 
@@ -1130,11 +1514,36 @@ public class GUIMain{
         Timeline timeline = new Timeline(new KeyFrame(Duration.millis(16), event -> {
             Bearing bearing = carVisual.car.getBearing();
 
+            CarVisual carAhead = getCarAhead(carVisual);
+
             //stop at the stop line when the car is not allowed to move
             if (!carVisual.getCar().canMove()) {
 
-                if (isAtStopLine(carVisual)) {
+                if (isAtStopLine(carVisual) && !reachedIntersection(carVisual)) {
                     carVisual.setSpeed(0);
+                }
+
+                else {
+                    carVisual.setSpeed(carVisual.getOriginalSpeed());
+                }
+            }
+
+            else {
+
+                carVisual.setSpeed(carVisual.getOriginalSpeed());
+
+            }
+
+            //check the car in front
+            if(carAhead != null) {
+                //following distance
+                if(carAhead.getSpeed() == 0) {
+                    carVisual.setSpeed(0);
+                }
+
+
+                else {
+                    carVisual.setSpeed(carAhead.getSpeed());
                 }
             }
 
@@ -1164,6 +1573,10 @@ public class GUIMain{
 
             if(otherCar != null) {
                 System.out.println("Collision!!!");
+
+                carVisual.setSpeed(0);
+                otherCar.setSpeed(0);
+
                 carVisual.getTimeline().stop();
                 otherCar.getTimeline().stop();
             }
@@ -1182,6 +1595,162 @@ public class GUIMain{
         timeline.play();
     }
 
+    private void movePedestrian(PedestrianVisual pedestrianVisual, Bearing bearing) {
+        ImageView pedestrian = pedestrianVisual.getImageView();
+
+        Timeline timeline = new Timeline(new KeyFrame(Duration.millis(16), event -> {
+            switch(bearing) {
+                case North:
+                    pedestrian.setY(pedestrian.getY() - pedestrianVisual.getSpeed());
+                    break;
+
+                case South:
+                    pedestrian.setY(pedestrian.getY() + pedestrianVisual.getSpeed());
+                    break;
+
+                case East:
+                    pedestrian.setX(pedestrian.getX() + pedestrianVisual.getSpeed());
+                    break;
+
+                case West:
+                    pedestrian.setX(pedestrian.getX() - pedestrianVisual.getSpeed());
+                    break;
+            }
+
+            pedestrianVisual.nextFrame(pedestrianVisual.getSpeed());
+
+            boolean leftScreen = switch (bearing) {
+
+                case North -> pedestrian.getY() + pedestrian.getFitHeight() < 0;
+
+                case South -> pedestrian.getY() > WINDOW_HEIGHT;
+
+                case East -> pedestrian.getX() > WINDOW_WIDTH;
+
+                case West -> pedestrian.getX() + pedestrian.getFitWidth() < 0;
+            };
+
+            //remove pedestrian after leaving screen
+            if (leftScreen) {
+
+                removePedestrian(pedestrianVisual);
+                System.out.println("Pedestrian has beedn removed.");
+
+            }
+        }));
+
+        timeline.setCycleCount(Timeline.INDEFINITE);
+
+        pedestrianVisual.setTimeline(timeline);
+
+        timeline.play();
+    }
+
+    //checks if car is too close to the car in front
+    private CarVisual getCarAhead(CarVisual carVisual) {
+
+
+        ImageView car = carVisual.getImageView();
+
+
+        for (CarVisual otherCar : cars) {
+
+
+            if (otherCar == carVisual) {
+                continue;
+            }
+
+
+            //must be traveling in the same direction
+            if (otherCar.getCurrentBearing() != carVisual.getCurrentBearing()) {
+                continue;
+            }
+
+
+            //must be in the same lane
+            if(otherCar.getLanePosition() != carVisual.getLanePosition()) {
+                continue;
+            }
+
+
+            ImageView other = otherCar.getImageView();
+
+
+            Bearing bearing = carVisual.getCurrentBearing();
+
+            double followingDistance = 20;
+
+            switch (bearing) {
+
+
+                case North:
+
+
+                    if (other.getY() < car.getY() && car.getY() - other.getY() < car.getFitHeight() + followingDistance) {
+                        return otherCar;
+                    }
+
+
+                    break;
+
+
+                case South:
+
+
+                    if (other.getY() > car.getY() && other.getY() - car.getY() < car.getFitHeight() + followingDistance) {
+
+
+                        return otherCar;
+                    }
+
+
+                    break;
+
+
+                case East:
+                    if (other.getX() > car.getX() && other.getX() - car.getX() < car.getFitWidth() + followingDistance) {
+                        return otherCar;
+                    }
+
+
+                    break;
+
+
+                case West:
+                    if (other.getX() < car.getX() && car.getX() - other.getX() < car.getFitWidth() + followingDistance) {
+                            return otherCar;
+                    }
+
+
+                    break;
+            }
+        }
+
+
+        return null;
+    }
+
+    //true if car has entered intersection
+    private boolean reachedIntersection(CarVisual carVisual) {
+
+        ImageView car = carVisual.getImageView();
+
+        double intersectionLeft = (WINDOW_WIDTH - ROAD_WIDTH) / 2.0;
+        double intersectionRight = intersectionLeft + ROAD_WIDTH;
+
+        double intersectionTop = (WINDOW_HEIGHT - ROAD_WIDTH) / 2.0;
+        double intersectionBottom = intersectionTop + ROAD_WIDTH;
+
+        return switch (carVisual.getCurrentBearing()) {
+            case North -> car.getY() < intersectionBottom;
+            case South -> car.getY() > intersectionTop;
+            case East -> car.getX() > intersectionLeft;
+            case West -> car.getX() < intersectionRight;
+        };
+
+    }
+
+
     // Returns true if the car is at the stop line
     private boolean isAtStopLine(CarVisual carVisual) {
 
@@ -1197,22 +1766,13 @@ public class GUIMain{
 
         double stopDistance = CROSSWALK_WIDTH + CROSSWALK_OFFSET + STOPLINE_WIDTH * 2;
 
-        switch (bearing) {
+        return switch (bearing) {
+            case North -> car.getY() <= intersectionBottom + stopDistance;
+            case South -> car.getY() + car.getFitHeight() >= intersectionTop - stopDistance;
+            case East -> car.getX() + car.getFitWidth() >= intersectionLeft - stopDistance;
+            case West -> car.getX() <= intersectionRight + stopDistance;
+        };
 
-            case North:
-                return car.getY() <= intersectionBottom + stopDistance;
-
-            case South:
-                return car.getY() + car.getFitHeight() >= intersectionTop - stopDistance;
-
-            case East:
-                return car.getX() + car.getFitWidth() >= intersectionLeft - stopDistance;
-
-            case West:
-                return car.getX() <= intersectionRight + stopDistance;
-        }
-
-        return false;
     }
 
     //returns true if a car is outside the screen
@@ -1237,7 +1797,7 @@ public class GUIMain{
         //traffic = 10; 750 ms between cars
         double spawnInterval = 3000.0 - (traffic - 1) * 250.0;
 
-        carSpawner = new Timeline(new KeyFrame(Duration.millis(spawnInterval), event -> {
+        carSpawner = new Timeline(new KeyFrame(Duration.millis(spawnInterval), _ -> {
             spawnCar(false);
         }));
 
@@ -1270,14 +1830,61 @@ public class GUIMain{
         Bearing bearing = Bearing.values()[random.nextInt(Bearing.values().length)];
 
         //random lane
-        //0, 1, or 2
-        int laneNumber = random.nextInt(LANES_PER_DIRECTION);
+        LanePosition lanePosition = LanePosition.values()[random.nextInt(LanePosition.values().length)];
 
-        GUILane lane = getLane(bearing, laneNumber);
+        //check if there is already a car near this spawn point
+        for (CarVisual carVisual : cars) {
 
-        createCar(nextCarID, lane, bearing, laneNumber, EMS);
+            //not in the same direction
+            if (carVisual.getCurrentBearing() != bearing) {
+                continue;
+            }
+
+            //doesn't have the same lane position
+            if (carVisual.getLanePosition() != lanePosition) {
+                continue;
+            }
+
+            ImageView otherCar = carVisual.getImageView();
+
+            //too close to spawn spoint
+            boolean tooClose = switch (bearing) {
+                case North -> otherCar.getY() > WINDOW_HEIGHT - 100;
+
+                case South -> otherCar.getY() < 50;
+
+                case East -> otherCar.getX() < 50;
+
+                case West -> otherCar.getX() > WINDOW_WIDTH - 150;
+            };
+
+            if (tooClose) {
+                System.out.println("Too Close");
+                return; //don't spawn car
+            }
+        }
+
+        GUILane lane = getLane(bearing, lanePosition);
+
+        createCar(nextCarID, lane, bearing, lanePosition, EMS);
 
         nextCarID++;
+    }
+
+    //check all cars for ems
+    private void checkEMS() {
+
+        boolean emsPresent = false;
+
+        for (CarVisual carVisual : cars) {
+
+            if (carVisual.getCar().isEMS()) {
+                emsPresent = true;
+                break;
+            }
+        }
+
+        setEMSIndicator(emsPresent);
     }
 
     //returns true if two cars are colliding
@@ -1360,18 +1967,33 @@ public class GUIMain{
 
     //small private helper class to store traffic lights
     private static class TrafficLightVisual {
-        private final Circle redLight;
-        private final Circle yellowLight;
-        private final Circle greenLight;
+        private final Rectangle light;
+        private final Polygon leftTurnArrow;
+        private final Polygon rightTurnArrow;
 
-        private LightCol currentColor;
+        private Shape currentShape;
+        private LightCol currentColor = LightCol.Red;
 
-        public TrafficLightVisual(Circle redLight, Circle yellowLight, Circle greenLight) {
-            this.redLight = redLight;
-            this.yellowLight = yellowLight;
-            this.greenLight = greenLight;
+        public TrafficLightVisual(Rectangle light, Polygon leftTurnArrow, Polygon rightTurnArrow) {
+            this.light = light;
+            this.leftTurnArrow = leftTurnArrow;
+            this.rightTurnArrow = rightTurnArrow;
+        }
 
-            currentColor = LightCol.Red;
+        public Polygon getLeftTurnArrow() {
+            return leftTurnArrow;
+        }
+
+        public Polygon getRightTurnArrow() {
+            return rightTurnArrow;
+        }
+
+        public Shape getCurrentShape() {
+            return currentShape;
+        }
+
+        public Rectangle getLight() {
+            return light;
         }
 
         public LightCol getCurrentColor() {
@@ -1382,6 +2004,8 @@ public class GUIMain{
             this.currentColor = currentColor;
         }
     }
+
+
     private record PedLightVisual (Text timer) {}
 
     //small private helper class to store car visuals
@@ -1389,18 +2013,18 @@ public class GUIMain{
         private final GUICar car;
         private final ImageView imageView;
         private double speed;
-        private double originalSpeed;
+        private final double originalSpeed;
         private Timeline timeline;
-        private int laneNumber;
+        private final LanePosition lanePosition;
 
         private Bearing currentBearing;
 
-        public CarVisual(GUICar car, ImageView imageView, double speed, int laneNumber) {
+        public CarVisual(GUICar car, ImageView imageView, double speed, LanePosition lanePosition) {
             this.car = car;
             this.imageView = imageView;
             this.speed = speed;
             this.originalSpeed = speed;
-            this.laneNumber = laneNumber;
+            this.lanePosition = lanePosition;
 
             this.currentBearing = car.getBearing();
         }
@@ -1441,8 +2065,76 @@ public class GUIMain{
             this.timeline = timeline;
         }
 
-        public int getLaneNumber() {
-            return laneNumber;
+        public LanePosition getLanePosition() {
+            return lanePosition;
+        }
+    }
+
+    //pedestrian visuals
+    private static class PedestrianVisual {
+        private final ImageView imageView;
+        private final ArrayList<Image> walkingFrames; //walking animation
+
+        private final double speed;
+
+        private double distanceSinceLastFrame = 0;
+
+        private int currentFrame = 0;
+
+        private Timeline timeline;
+
+        public PedestrianVisual(ImageView imageView, ArrayList<Image> walkingFrames, double speed) {
+            this.imageView = imageView;
+            this.walkingFrames = walkingFrames;
+            this.speed = speed;
+        }
+
+        public ImageView getImageView() {
+            return imageView;
+        }
+
+        public double getSpeed() {
+            return speed;
+        }
+
+        public int getCurrentFrame() {
+            return currentFrame;
+        }
+
+        //next walking frame
+        public void nextFrame(double distanceMoved) {
+            distanceSinceLastFrame += distanceMoved;
+
+            //change animation frame every 8 pixels traveled
+            double frameDistance = 8.0;
+
+            if(distanceSinceLastFrame >= frameDistance) {
+                distanceSinceLastFrame -= frameDistance;
+
+                currentFrame++;
+
+                if(currentFrame >= walkingFrames.size()) {
+                    currentFrame = 0;
+                }
+
+                //change image
+                imageView.setImage(walkingFrames.get(currentFrame));
+            }
+
+        }
+
+        public Timeline getTimeline() {
+            return timeline;
+        }
+
+        public void setTimeline(Timeline timeline) {
+            this.timeline = timeline;
+        }
+
+        public void stopAnimation() {
+            if(timeline != null) {
+                timeline.stop();
+            }
         }
     }
 }

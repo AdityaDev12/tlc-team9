@@ -1,4 +1,9 @@
 package Communication;
+
+import Communication.EMSPriorityState;
+import Communication.PedestrianSignalState;
+import Communication.SensorState;
+
 /**
  * EVENT:target:value
  */
@@ -24,6 +29,34 @@ public class SimulatorEvent {
 
     public String getValue() {
         return value;
+    }
+
+    // ---- Factory methods: build a typed event without hand-typing wire strings ----
+
+    public static SimulatorEvent pedestrianSignal(String crossingId, PedestrianSignalState state) {
+        return new SimulatorEvent(TLCCommand.UPDATE_PEDESTRIAN_SIGNAL, crossingId, state.name());
+    }
+
+    public static SimulatorEvent pedestrianButtonPressed(String crossingId) {
+        return new SimulatorEvent(TLCCommand.PEDESTRIAN_BUTTON_PRESSED, crossingId, "PRESSED");
+    }
+
+    public static SimulatorEvent vehicleSensor(String laneId, SensorState state) {
+        TLCCommand command = (state == SensorState.DETECTED) ? TLCCommand.VEHICLE_DETECTED : TLCCommand.VEHICLE_CLEARED;
+        return new SimulatorEvent(command, laneId, state.name());
+    }
+
+    public static SimulatorEvent emsPriority(String direction, EMSPriorityState state) {
+        TLCCommand command = (state == EMSPriorityState.REQUEST) ? TLCCommand.EMS_PRIORITY_REQUEST : TLCCommand.EMS_PRIORITY_CANCEL;
+        return new SimulatorEvent(command, direction, state.name());
+    }
+
+    public static SimulatorEvent triggerFailSafe(String mode) {
+        return new SimulatorEvent(TLCCommand.TRIGGER_FAIL_SAFE, "ALL", mode);
+    }
+
+    public static SimulatorEvent resumeNormal() {
+        return new SimulatorEvent(TLCCommand.RESUME_NORMAL, "ALL", "NORMAL");
     }
 
     /**
@@ -58,4 +91,3 @@ public class SimulatorEvent {
         return toWireFormat();
     }
 }
-

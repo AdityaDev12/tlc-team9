@@ -1,4 +1,4 @@
-package Protocol;
+package Communication;
 
 /**
  * State of an EMS priority request from the antenna receiver.

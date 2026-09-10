@@ -1,4 +1,4 @@
-package Protocol;
+package Communication;
 
 /**
  * State of a pedestrian crossing signal.

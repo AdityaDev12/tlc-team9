@@ -1,4 +1,4 @@
-package Protocol;
+package Communication;
 
 /**
  * State reported by a vehicle sensor embedded in a lane.

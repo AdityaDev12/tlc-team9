@@ -6,7 +6,7 @@ package Communication;
  *            (you parse these and call into the JavaFX animation controller).
  * OUTBOUND = sent by your GUI layer out to the server
  *            (simulated hardware events: sensors, buttons, EMS receiver).
- * Keeping both directions in one enum keeps the protocol single-source-of-truth:
+ * Keeping both directions in one enum keeps the protocol single source of truth:
  */
 public enum TLCCommand {
 

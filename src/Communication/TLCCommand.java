@@ -2,14 +2,11 @@ package Communication;
 
 /**
  * Every valid command type in the TLC instruction protocol.
- *
  * INBOUND  = sent by the controller/server, consumed by your GUI layer
  *            (you parse these and call into the JavaFX animation controller).
  * OUTBOUND = sent by your GUI layer out to the server
  *            (simulated hardware events: sensors, buttons, EMS receiver).
- *
  * Keeping both directions in one enum keeps the protocol single-source-of-truth:
- * everyone on the team imports this file instead of hardcoding strings.
  */
 public enum TLCCommand {
 

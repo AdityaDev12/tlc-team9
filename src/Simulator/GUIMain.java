@@ -1305,6 +1305,12 @@ public class GUIMain{
         //connect logic car with visual
         CarVisual carVisual = new CarVisual(guiCar, car, speed, lanePosition);
 
+        if (lanePosition != LanePosition.Middle) {
+            Bearing pendingBearing = computeTurnBearing(bearing, lanePosition);
+            double mergeThreshold = getMergeCoordinate(pendingBearing, lanePosition);
+            carVisual.setTurnInfo(pendingBearing, mergeThreshold);
+        }
+
         //store car
         cars.add(carVisual);
 
@@ -1422,6 +1428,46 @@ public class GUIMain{
         }
     }
 
+    private Bearing computeTurnBearing(
+            Bearing entry,
+            LanePosition lanePosition) {
+
+        boolean isRight = lanePosition == LanePosition.Right;
+
+        return switch (entry) {
+
+            case North -> isRight ? Bearing.West : Bearing.East;
+            case South -> isRight ? Bearing.East : Bearing.West;
+            case East -> isRight ? Bearing.North : Bearing.South;
+            case West -> isRight ? Bearing.South : Bearing.North;
+        };
+    }
+
+    private double getRotationForBearing(Bearing bearing) {
+        return switch (bearing) {
+            case North -> 0;
+            case South -> 180;
+            case East -> 90;
+            case West -> 270;
+        };
+    }
+
+    // returns the fixed lane coordinate a turning car merges into on its new road
+    // (always the "straight" lane, lane index 1, of the destination approach)
+    private double getMergeCoordinate(Bearing bearing, LanePosition lanePosition) {
+        double roadLeft = (WINDOW_WIDTH - ROAD_WIDTH) / 2;
+        double roadTop = (WINDOW_HEIGHT - ROAD_WIDTH) / 2;
+
+        int laneNumber = lanePosition.ordinal();
+
+        return switch (bearing) {
+            case South -> roadLeft + (LANES_PER_DIRECTION - 1 - laneNumber) * LANE_WIDTH;
+            case North -> roadLeft + (LANES_PER_DIRECTION + laneNumber) * LANE_WIDTH;
+            case East  -> roadTop + (LANES_PER_DIRECTION + laneNumber) * LANE_WIDTH;
+            case West  -> roadTop + (LANES_PER_DIRECTION - 1 - laneNumber) * LANE_WIDTH;
+        };
+    }
+
     private void positionPed(ImageView pedestrian, Bearing bearing, boolean firstCrosswalk) {
         double intersectionLeft = (WINDOW_WIDTH - ROAD_WIDTH) / 2.0;
         double intersectionRight = intersectionLeft + ROAD_WIDTH;
@@ -1512,7 +1558,32 @@ public class GUIMain{
         ImageView car = carVisual.imageView;
 
         Timeline timeline = new Timeline(new KeyFrame(Duration.millis(16), event -> {
-            Bearing bearing = carVisual.car.getBearing();
+            Bearing bearing = carVisual.getCurrentBearing();
+
+            //check if this car has reached its turn line (only for left/right lanes)
+            if (!carVisual.hasTurned() && carVisual.getLanePosition() != LanePosition.Middle) {
+                double threshold = carVisual.getMergeThreshold();
+                boolean crossedMerge = switch (bearing) {
+                    case North -> car.getY() <= threshold;
+                    case South -> car.getY() >= threshold;
+                    case East  -> car.getX() >= threshold;
+                    case West  -> car.getX() <= threshold;
+                };
+
+                if (crossedMerge) {
+                    if (bearing == Bearing.North || bearing == Bearing.South) {
+                        car.setY(threshold);
+                    }
+
+                    else {
+                        car.setX(threshold);
+                    }
+                    carVisual.setCurrentBearing(carVisual.getPendingBearing());
+                    carVisual.setHasTurned(true);
+                    car.setRotate(getRotationForBearing(carVisual.getPendingBearing()));
+                    bearing = carVisual.getCurrentBearing();
+                }
+            }
 
             CarVisual carAhead = getCarAhead(carVisual);
 
@@ -1581,7 +1652,7 @@ public class GUIMain{
                 otherCar.getTimeline().stop();
             }
 
-            if(isOutsideScreen(car, bearing)) {
+            if(isOutsideScreen(car, carVisual.getCurrentBearing())) {
                 removeCar(carVisual);
                 System.out.println("car has been removed.");
             }
@@ -2017,6 +2088,12 @@ public class GUIMain{
         private Timeline timeline;
         private final LanePosition lanePosition;
 
+        private Bearing entryBearing;
+
+        private boolean hasTurned = false;
+        private Bearing pendingBearing;
+        private double mergeThreshold;
+
         private Bearing currentBearing;
 
         public CarVisual(GUICar car, ImageView imageView, double speed, LanePosition lanePosition) {
@@ -2027,6 +2104,7 @@ public class GUIMain{
             this.lanePosition = lanePosition;
 
             this.currentBearing = car.getBearing();
+            this.entryBearing = car.getBearing();
         }
 
         public Bearing getCurrentBearing() {
@@ -2035,6 +2113,10 @@ public class GUIMain{
 
         public void setCurrentBearing(Bearing currentBearing) {
             this.currentBearing = currentBearing;
+        }
+
+        public Bearing getEntryBearing() {
+            return entryBearing;
         }
 
         public GUICar getCar() {
@@ -2067,6 +2149,27 @@ public class GUIMain{
 
         public LanePosition getLanePosition() {
             return lanePosition;
+        }
+
+        public boolean hasTurned() {
+            return hasTurned;
+        }
+
+        public void setHasTurned(boolean hasTurned) {
+            this.hasTurned = hasTurned;
+        }
+
+        public Bearing getPendingBearing() {
+            return pendingBearing;
+        }
+
+        public double getMergeThreshold() {
+            return mergeThreshold;
+        }
+
+        public void setTurnInfo(Bearing pendingBearing, double mergeThreshold) {
+            this.pendingBearing = pendingBearing;
+            this.mergeThreshold = mergeThreshold;
         }
     }
 

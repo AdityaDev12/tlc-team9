@@ -2068,14 +2068,7 @@ public class GUIMain{
                 continue;
             }
 
-            Bearing otherBearing = otherCar.getCurrentBearing();
-
-            //only check cars coming from the opposite direction
-            boolean isOncoming =
-                    (bearing == Bearing.North && otherBearing == Bearing.South)
-                            || (bearing == Bearing.South && otherBearing == Bearing.North)
-                            || (bearing == Bearing.East && otherBearing == Bearing.West)
-                            || (bearing == Bearing.West && otherBearing == Bearing.East);
+            boolean isOncoming = isOncoming(otherCar, bearing);
 
             if (!isOncoming) {
                 continue;
@@ -2084,27 +2077,29 @@ public class GUIMain{
             ImageView other = otherCar.getImageView();
 
             boolean hasPassedCenter = switch (bearing) {
-
-                case North ->
-                        other.getY() > centerY;
-
-                case South ->
-                        other.getY() < centerY;
-
-                case East ->
-                        other.getX() < centerX;
-
-                case West ->
-                        other.getX() > centerX;
+                case North -> other.getY() > centerY;
+                case South -> other.getY() < centerY;
+                case East -> other.getX() < centerX;
+                case West -> other.getX() > centerX;
             };
 
-            //oncoming car has NOT passed the middle yet
+            //oncoming car has not passed the middle yet
             if (!hasPassedCenter) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    private static boolean isOncoming(CarVisual otherCar, Bearing bearing) {
+        Bearing otherBearing = otherCar.getCurrentBearing();
+
+        //only check cars coming from the opposite direction
+        return (bearing == Bearing.North && otherBearing == Bearing.South)
+                || (bearing == Bearing.South && otherBearing == Bearing.North)
+                || (bearing == Bearing.East && otherBearing == Bearing.West)
+                || (bearing == Bearing.West && otherBearing == Bearing.East);
     }
 
     //small private helper class to store traffic lights

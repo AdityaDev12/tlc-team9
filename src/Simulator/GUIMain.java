@@ -1232,18 +1232,18 @@ public class GUIMain{
 
             case North, East:
                 lanePosition = switch (lightID) {
-                    case 0 -> LanePosition.Right;
+                    case 0 -> LanePosition.Left;
                     case 1 -> LanePosition.Middle;
-                    case 2 -> LanePosition.Left;
+                    case 2 -> LanePosition.Right;
                     default -> null;
                 };
                 break;
 
             case South, West:
                 lanePosition = switch (lightID) {
-                    case 0 -> LanePosition.Left;
+                    case 0 -> LanePosition.Right;
                     case 1 -> LanePosition.Middle;
-                    case 2 -> LanePosition.Right;
+                    case 2 -> LanePosition.Left;
                     default -> null;
                 };
                 break;
@@ -1304,6 +1304,7 @@ public class GUIMain{
 
         //connect logic car with visual
         CarVisual carVisual = new CarVisual(guiCar, car, speed, lanePosition);
+        System.out.println(lanePosition);
 
         if (lanePosition != LanePosition.Middle) {
             Bearing pendingBearing = computeTurnBearing(bearing, lanePosition);
@@ -1384,6 +1385,7 @@ public class GUIMain{
     //lane number starts at 0, left to right
     private void positionCar(ImageView car, Bearing bearing, LanePosition lanePosition) {
         int laneNumber = lanePosition.ordinal();
+        laneNumber = LANES_PER_DIRECTION - 1 - laneNumber;
 
         //vertical road
         double roadLeft = (WINDOW_WIDTH - ROAD_WIDTH) / 2;
@@ -1432,14 +1434,14 @@ public class GUIMain{
             Bearing entry,
             LanePosition lanePosition) {
 
-        boolean isRight = lanePosition == LanePosition.Right;
+        boolean isLeft = lanePosition == LanePosition.Left;
 
         return switch (entry) {
 
-            case North -> isRight ? Bearing.West : Bearing.East;
-            case South -> isRight ? Bearing.East : Bearing.West;
-            case East -> isRight ? Bearing.North : Bearing.South;
-            case West -> isRight ? Bearing.South : Bearing.North;
+            case North -> isLeft ? Bearing.West : Bearing.East;
+            case South -> isLeft ? Bearing.East : Bearing.West;
+            case East -> isLeft ? Bearing.North : Bearing.South;
+            case West -> isLeft ? Bearing.South : Bearing.North;
         };
     }
 
@@ -1571,6 +1573,16 @@ public class GUIMain{
                 };
 
                 if (crossedMerge) {
+                    //check for oncoming traffic
+                    /*
+                    if(carVisual.getLanePosition() == LanePosition.Left && hasOncomingTraffic(carVisual)) {
+                        carVisual.setSpeed(0);
+                        System.out.println(carVisual.getLanePosition());
+
+                        return;
+
+                    }*/
+
                     if (bearing == Bearing.North || bearing == Bearing.South) {
                         car.setY(threshold);
                     }
@@ -2035,6 +2047,7 @@ public class GUIMain{
         //no collision
         return null;
     }
+
 
     //small private helper class to store traffic lights
     private static class TrafficLightVisual {

@@ -32,15 +32,20 @@ public class GUILane {
         mySensors.add(sensor);
     }
 
+    public LightShape getLightShape(int lightID) {
+        return myLights.get(lightID).getShape();
+    }
+
     public LightCol getLightCol(int lightID){
         return myLights.get(lightID).getColor();
     }
     public void updateSensor(int ID, boolean isActive){
         mySensors.get(ID).setActive(isActive);
     }
-    public void updateLights(int LightID, LightCol Color){
+    public void updateLights(int LightID, LightCol Color, LightShape Shape){
         GUILight theLight = myLights.get(LightID);
         theLight.changeColor(Color);
+        theLight.setShape(Shape);
     }
 
     //get lane position

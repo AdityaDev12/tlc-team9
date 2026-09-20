@@ -111,7 +111,7 @@ public class GUIMain{
     private final Random random = new Random();
 
     private static final double MIN_CAR_SPEED = 1.0;
-    private static final double MAX_CAR_SPEED = 4.0;
+    private static final double MAX_CAR_SPEED = 2.5;
 
     private Circle emsIndicator;
     private Label emsLabel;
@@ -1255,7 +1255,7 @@ public class GUIMain{
         GUILane lane = getLane(direction, lanePosition);
 
         assert lane != null;
-        lane.updateLights(0, color);
+        lane.updateLights(0, color, shape);
 
 
 
@@ -1463,8 +1463,8 @@ public class GUIMain{
         int laneNumber = lanePosition.ordinal();
 
         return switch (bearing) {
-            case South -> roadLeft + (LANES_PER_DIRECTION - 1 - laneNumber) * LANE_WIDTH;
             case North -> roadLeft + (LANES_PER_DIRECTION + laneNumber) * LANE_WIDTH;
+            case South -> roadLeft + (LANES_PER_DIRECTION - 1 - laneNumber) * LANE_WIDTH;
             case East  -> roadTop + (LANES_PER_DIRECTION + laneNumber) * LANE_WIDTH;
             case West  -> roadTop + (LANES_PER_DIRECTION - 1 - laneNumber) * LANE_WIDTH;
         };
@@ -1574,14 +1574,14 @@ public class GUIMain{
 
                 if (crossedMerge) {
                     //check for oncoming traffic
-                    /*
-                    if(carVisual.getLanePosition() == LanePosition.Left && hasOncomingTraffic(carVisual)) {
+                    if(carVisual.getLanePosition() == LanePosition.Left
+                            && carVisual.getCar().getLane().getLightShape(0) != LightShape.LeftArrow
+                            && hasOncomingTraffic(carVisual)) {
                         carVisual.setSpeed(0);
-                        System.out.println(carVisual.getLanePosition());
 
                         return;
 
-                    }*/
+                    }
 
                     if (bearing == Bearing.North || bearing == Bearing.South) {
                         car.setY(threshold);
@@ -1745,7 +1745,7 @@ public class GUIMain{
 
 
             //must be traveling in the same direction
-            if (otherCar.getCurrentBearing() != carVisual.getCurrentBearing()) {
+            if (otherCar.getEntryBearing() != carVisual.getEntryBearing()) {
                 continue;
             }
 
@@ -2048,6 +2048,64 @@ public class GUIMain{
         return null;
     }
 
+    //check if there is oncoming traffic
+    private boolean hasOncomingTraffic(CarVisual turningCar) {
+
+        Bearing bearing = turningCar.getCurrentBearing();
+
+        //only applies to left-turning cars
+        if (turningCar.getLanePosition() != LanePosition.Left) {
+            return false;
+        }
+
+        double centerX = WINDOW_WIDTH / 2.0;
+        double centerY = WINDOW_HEIGHT / 2.0;
+
+        for (CarVisual otherCar : cars) {
+
+            //don't check against itself
+            if (otherCar == turningCar) {
+                continue;
+            }
+
+            Bearing otherBearing = otherCar.getCurrentBearing();
+
+            //only check cars coming from the opposite direction
+            boolean isOncoming =
+                    (bearing == Bearing.North && otherBearing == Bearing.South)
+                            || (bearing == Bearing.South && otherBearing == Bearing.North)
+                            || (bearing == Bearing.East && otherBearing == Bearing.West)
+                            || (bearing == Bearing.West && otherBearing == Bearing.East);
+
+            if (!isOncoming) {
+                continue;
+            }
+
+            ImageView other = otherCar.getImageView();
+
+            boolean hasPassedCenter = switch (bearing) {
+
+                case North ->
+                        other.getY() > centerY;
+
+                case South ->
+                        other.getY() < centerY;
+
+                case East ->
+                        other.getX() < centerX;
+
+                case West ->
+                        other.getX() > centerX;
+            };
+
+            //oncoming car has NOT passed the middle yet
+            if (!hasPassedCenter) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     //small private helper class to store traffic lights
     private static class TrafficLightVisual {

@@ -24,6 +24,10 @@ public class GUILight {
         return ID;
     }
 
+    public void setShape(LightShape Shape) {
+        this.Shape = Shape;
+    }
+
     public LightShape getShape() {
         return Shape;
     }

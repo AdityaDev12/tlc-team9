@@ -116,6 +116,8 @@ public class GUIMain{
     private Circle emsIndicator;
     private Label emsLabel;
 
+    private boolean pedestrianCanWalk = false;
+
     public GUIMain(Stage primaryStage){
         this.primaryStage = primaryStage;
 
@@ -1348,7 +1350,9 @@ public class GUIMain{
                 new PedestrianVisual(
                         pedestrian,
                         walkingFrames,
-                        speed
+                        speed,
+                        firstCrosswalk,
+                        bearing
         );
 
         streetPane.getChildren().add(pedestrian);
@@ -1554,6 +1558,26 @@ public class GUIMain{
         }
     }
 
+    private boolean reachedPedStop(PedestrianVisual pedestrian, Bearing bearing) {
+        ImageView ped = pedestrian.getImageView();
+
+        double intersectionLeft = (WINDOW_WIDTH - ROAD_WIDTH) / 2.0;
+        double intersectionRight = intersectionLeft + ROAD_WIDTH;
+
+        double intersectionTop = (WINDOW_HEIGHT - ROAD_WIDTH) / 2.0;
+        double intersectionBottom = intersectionTop + ROAD_WIDTH;
+
+        double stopDistance = 20;
+
+        return switch (bearing) {
+            case North -> ped.getY() <= intersectionBottom + stopDistance;
+            case South -> ped.getY() >= intersectionTop - stopDistance * 2;
+            case East -> ped.getX() >= intersectionLeft - stopDistance * 2;
+            case West -> ped.getX() <= intersectionRight + stopDistance;
+        };
+
+    }
+
     //animation to move the car
     private void moveCar(CarVisual carVisual) {
 
@@ -1682,6 +1706,12 @@ public class GUIMain{
         ImageView pedestrian = pedestrianVisual.getImageView();
 
         Timeline timeline = new Timeline(new KeyFrame(Duration.millis(16), event -> {
+
+            //don't walk
+            if(!pedestrianCanWalk && reachedPedStop(pedestrianVisual, bearing)) {
+                return;
+            }
+
             switch(bearing) {
                 case North:
                     pedestrian.setY(pedestrian.getY() - pedestrianVisual.getSpeed());
@@ -1727,6 +1757,10 @@ public class GUIMain{
         pedestrianVisual.setTimeline(timeline);
 
         timeline.play();
+    }
+
+    public void setPedestrianCanWalk(boolean canWalk) {
+        pedestrianCanWalk = canWalk;
     }
 
     //checks if car is too close to the car in front
@@ -2246,16 +2280,19 @@ public class GUIMain{
 
         private final double speed;
 
+        private final boolean firstCrosswalk;
+
         private double distanceSinceLastFrame = 0;
 
         private int currentFrame = 0;
 
         private Timeline timeline;
 
-        public PedestrianVisual(ImageView imageView, ArrayList<Image> walkingFrames, double speed) {
+        public PedestrianVisual(ImageView imageView, ArrayList<Image> walkingFrames, double speed, boolean firstCrosswalk, Bearing bearing) {
             this.imageView = imageView;
             this.walkingFrames = walkingFrames;
             this.speed = speed;
+            this.firstCrosswalk = firstCrosswalk;
         }
 
         public ImageView getImageView() {
@@ -2264,6 +2301,10 @@ public class GUIMain{
 
         public double getSpeed() {
             return speed;
+        }
+
+        public boolean isFirstCrosswalk() {
+            return firstCrosswalk;
         }
 
         public int getCurrentFrame() {

@@ -1465,12 +1465,13 @@ public class GUIMain{
         double roadTop = (WINDOW_HEIGHT - ROAD_WIDTH) / 2;
 
         int laneNumber = lanePosition.ordinal();
+        int physicalLane = LANES_PER_DIRECTION - 1 - laneNumber;
 
         return switch (bearing) {
-            case North -> roadLeft + (LANES_PER_DIRECTION + laneNumber) * LANE_WIDTH;
-            case South -> roadLeft + (LANES_PER_DIRECTION - 1 - laneNumber) * LANE_WIDTH;
-            case East  -> roadTop + (LANES_PER_DIRECTION + laneNumber) * LANE_WIDTH;
-            case West  -> roadTop + (LANES_PER_DIRECTION - 1 - laneNumber) * LANE_WIDTH;
+            case North -> roadLeft + (LANES_PER_DIRECTION + physicalLane) * LANE_WIDTH;
+            case South -> roadLeft + (LANES_PER_DIRECTION - 1 - physicalLane) * LANE_WIDTH;
+            case East  -> roadTop + (LANES_PER_DIRECTION + physicalLane) * LANE_WIDTH;
+            case West  -> roadTop + (LANES_PER_DIRECTION - 1 - physicalLane) * LANE_WIDTH;
         };
     }
 
@@ -1777,9 +1778,21 @@ public class GUIMain{
                 continue;
             }
 
+            Bearing otherBearing;
+
+            System.out.println(otherCar.hasTurned());
+
+            if (otherCar.hasTurned()) {
+                otherBearing = otherCar.getCurrentBearing();
+            }
+
+            else {
+                otherBearing = otherCar.getEntryBearing();
+            }
+
 
             //must be traveling in the same direction
-            if (otherCar.getEntryBearing() != carVisual.getEntryBearing()) {
+            if (otherBearing != carVisual.getCurrentBearing()) {
                 continue;
             }
 
@@ -1795,7 +1808,7 @@ public class GUIMain{
 
             Bearing bearing = carVisual.getCurrentBearing();
 
-            double followingDistance = 20;
+            double followingDistance = 50;
 
             switch (bearing) {
 

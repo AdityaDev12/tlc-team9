@@ -1,7 +1,6 @@
 package Harness;
 
 import Communication.PedestrianSignalState;
-import javafx.animation.Timeline;
 
 import java.util.Timer;
 
@@ -25,7 +24,7 @@ public class PedestrianMode {
     public void handlePedRequest() {
         if(pedestrian.getState() == PedestrianSignalState.WAIT) {
             //walk
-            pedestrian.walk();
+            pedestrian.pedWalk();
 
             //set timer
             startTime = System.currentTimeMillis();
@@ -46,14 +45,14 @@ public class PedestrianMode {
     public void timeout() {
         if(pedestrian.getState() == PedestrianSignalState.WALK) {
             //stop
-            pedestrian.stop();
+            pedestrian.pedStop();
 
             startTime = 0;
         }
     }
 
     public void reset() {
-        pedestrian.stop();
+        pedestrian.pedStop();
         startTime = 0;
     }
 

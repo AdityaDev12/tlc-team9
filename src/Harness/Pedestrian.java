@@ -18,11 +18,11 @@ public class Pedestrian {
         return state;
     }
 
-    public void walk() {
+    public void pedWalk() {
         state = PedestrianSignalState.WALK;
     }
 
-    public void stop() {
+    public void pedStop() {
         state = PedestrianSignalState.WAIT;
     }
 }

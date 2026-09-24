@@ -1927,7 +1927,7 @@ public class GUIMain{
         //traffic = 10; 750 ms between cars
         double spawnInterval = 3000.0 - (traffic - 1) * 250.0;
 
-        carSpawner = new Timeline(new KeyFrame(Duration.millis(spawnInterval), _ -> {
+        carSpawner = new Timeline(new KeyFrame(Duration.millis(spawnInterval), action -> {
             spawnCar(false);
         }));
 

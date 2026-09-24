@@ -6,6 +6,7 @@ import Simulator.*;
 
 import java.io.IOException;
 import java.util.Scanner;
+import java.util.Timer;
 
 /**
  * Temporary test, creates mux
@@ -14,9 +15,45 @@ import java.util.Scanner;
 public class Main {
 
     public static void main(String[] args) {
-        System.out.println("Starting Harness...");
+        System.out.println("Starting Traffic Light Controller...");
         try {
             Mux mux = new Mux(); // connects to simulator
+
+            // interface TLC to GUI
+            TrafficSensor trafficSensor = new TrafficSensor(mux);
+            TrafficLights trafficLights = new TrafficLights(mux);
+            Antenna antenna = new Antenna(mux);
+            Pedestrian pedestrian = new Pedestrian(mux);
+            Timer timer = new Timer();
+            Clock clock = new Clock();
+
+            // operating modes
+            DayMode dayMode = new DayMode(
+                    trafficSensor, trafficLights, timer
+            );
+            NightMode nightMode = new NightMode(
+                    trafficSensor, trafficLights, timer
+            );
+            EMSMode emsMode = new EMSMode(
+                    antenna, trafficLights, timer
+            );
+            PedestrianMode pedestrianMode = new PedestrianMode(
+                    pedestrian, trafficLights, timer
+            );
+
+            // mode control
+            ModeControl modeControl = new ModeControl (
+                    dayMode, nightMode, emsMode, pedestrianMode, clock
+            );
+
+            // start TLC
+            /**
+             * Need: Receive events from Sim,
+             * update TLC interface object,
+             * allow ModeControl selection,
+             * execute selection
+             */
+
 
             Scanner scanner = new Scanner(System.in);
             while (true) {
@@ -72,7 +109,7 @@ public class Main {
             mux.close();
 
         } catch (IOException e) {
-            System.err.println("ERROR: HarnessMain");
+            System.err.println("ERROR: HarnessMain unable to connect TLC to Simulator");
             e.printStackTrace();
         }
     }

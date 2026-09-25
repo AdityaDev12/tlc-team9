@@ -1,5 +1,6 @@
 package Simulator;
 
+import Communication.EMSPriorityState;
 import Communication.PedestrianSignalState;
 import Communication.SimulatorEvent;
 import javafx.animation.KeyFrame;
@@ -1370,6 +1371,13 @@ public class GUIMain{
 
         //store car
         cars.add(carVisual);
+
+        //send ems event to harness
+        if(EMS) {
+            SimulatorEvent event = SimulatorEvent.emsPriority(bearing.name(), EMSPriorityState.REQUEST);
+
+            server.sendEvent(event);
+        }
 
         moveCar(carVisual);
 

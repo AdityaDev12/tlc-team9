@@ -107,6 +107,13 @@ public class GUIMain{
             )
     );
 
+    private final List<String> ambulanceImages = List.of(
+            "/cars/Ambulance.png",
+            "/ambulance_animation/1.png",
+            "/ambulance_animation/2.png",
+            "/ambulance_animation/3.png"
+    );
+
     //1 = low traffic, 10 = heavy traffic
     private int traffic = 0; //traffic off by default
 
@@ -1715,6 +1722,10 @@ public class GUIMain{
                     break;
             }
 
+            if(carVisual.car.isEMS()) {
+                carVisual.nextFrame();
+            }
+
             carVisual.getCar().addDistance(speed);
 
             CarVisual otherCar = isCollidingWithAnotherCar(carVisual);
@@ -2492,7 +2503,7 @@ public class GUIMain{
     }
 
     //small private helper class to store car visuals
-    private static class CarVisual {
+    private class CarVisual {
         private final GUICar car;
         private final ImageView imageView;
         private double speed;
@@ -2508,6 +2519,9 @@ public class GUIMain{
 
         private Bearing currentBearing;
 
+        private int currentFrame = 0;
+        private int frameCounter = 0;
+
         public CarVisual(GUICar car, ImageView imageView, double speed, LanePosition lanePosition) {
             this.car = car;
             this.imageView = imageView;
@@ -2517,6 +2531,32 @@ public class GUIMain{
 
             this.currentBearing = car.getBearing();
             this.entryBearing = car.getBearing();
+        }
+
+        public void nextFrame() {
+            if(ambulanceImages.isEmpty()) {
+                return;
+            }
+
+            frameCounter++;
+
+            if(frameCounter < 8) {
+                return;
+            }
+
+            frameCounter = 0;
+
+            currentFrame++;
+
+            if(currentFrame >= ambulanceImages.size()) {
+                currentFrame = 0;
+            }
+
+            String imagePath = ambulanceImages.get(currentFrame);
+
+            Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath)));
+
+            imageView.setImage(image);
         }
 
         public Bearing getCurrentBearing() {

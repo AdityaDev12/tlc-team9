@@ -1,5 +1,7 @@
 package Simulator;
 
+import Communication.PedestrianSignalState;
+import Communication.SimulatorEvent;
 import javafx.animation.KeyFrame;
 import javafx.animation.PauseTransition;
 import javafx.animation.Timeline;
@@ -23,6 +25,8 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
+import java.security.Key;
+import java.sql.Time;
 import java.util.*;
 
 /*
@@ -117,7 +121,13 @@ public class GUIMain{
     private Circle emsIndicator;
     private Label emsLabel;
 
-    private boolean pedestrianCanWalk = false;
+    private PedestrianSignalState pedestrianState = PedestrianSignalState.WAIT;
+    private boolean pedestrianButtonPressed = false;
+
+    private Timeline pedestrianTimer;
+    private int pedestrianTime = 15;
+
+    private SimulatorServer server;
 
     public GUIMain(Stage primaryStage){
         this.primaryStage = primaryStage;
@@ -131,6 +141,10 @@ public class GUIMain{
         trafficLights.put(Bearing.South, new ArrayList<>());
         trafficLights.put(Bearing.East, new ArrayList<>());
         trafficLights.put(Bearing.West, new ArrayList<>());
+    }
+
+    public void setServer(SimulatorServer server) {
+        this.server = server;
     }
 
     public void makeGUI() {
@@ -1000,7 +1014,7 @@ public class GUIMain{
         inner.setArcHeight(inner.getHeight()*.8);
         inner.setArcWidth(inner.getWidth()*.8);
 
-        timer = new Text(x + width*.25, y + width*.65, "0");
+        timer = new Text(x + width*.25, y + width*.65, "-");
         timer.setFont(Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 10));
 
         timer.setTextAlignment(TextAlignment.CENTER);
@@ -1026,6 +1040,39 @@ public class GUIMain{
 
         streetPane.getChildren().addAll(housing, inner, timer, button);
         pedLights.add(new PedLightVisual(timer));
+    }
+
+    //visual timer
+    private void startPedestrianTimer() {
+        pedestrianTime = 15;
+
+        //show start time
+        for(PedLightVisual light : pedLights) {
+            light.getTimer().setText(String.valueOf(pedestrianTime));
+        }
+
+        pedestrianTimer = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
+            pedestrianTime--;
+
+            //set new time
+            for(PedLightVisual light : pedLights) {
+                light.getTimer().setText(String.valueOf(pedestrianTime));
+            }
+
+            if(pedestrianTime <= 0) {
+                pedestrianTimer.stop();
+
+                //return to idle
+                for(PedLightVisual light : pedLights) {
+                    light.getTimer().setText("-");
+                }
+
+                pedestrianButtonPressed = false;
+            }
+        }));
+
+        pedestrianTimer.setCycleCount(Timeline.INDEFINITE);
+        pedestrianTimer.play();
     }
 
     //traffic light
@@ -1914,7 +1961,13 @@ public class GUIMain{
         Timeline timeline = new Timeline(new KeyFrame(Duration.millis(16), event -> {
 
             //don't walk
-            if(!pedestrianCanWalk && reachedPedStop(pedestrianVisual, bearing)) {
+            if(pedestrianState == PedestrianSignalState.WAIT && reachedPedStop(pedestrianVisual, bearing)) {
+
+                if(!pedestrianButtonPressed) {
+                    pedestrianButtonPressed = true;
+                    pedestrianButtonPress(getCrossingId(bearing));
+                }
+
                 return;
             }
 
@@ -1965,8 +2018,30 @@ public class GUIMain{
         timeline.play();
     }
 
-    public void setPedestrianCanWalk(boolean canWalk) {
-        pedestrianCanWalk = canWalk;
+    private String getCrossingId(Bearing bearing) {
+        return switch (bearing) {
+            case North -> "North";
+            case South -> "South";
+            case East -> "East";
+            case West -> "West";
+        };
+    }
+
+    public void setPedestrianState(PedestrianSignalState state) {
+        pedestrianState = state;
+
+        if(state == PedestrianSignalState.WALK) {
+            startPedestrianTimer();
+        }
+
+    }
+
+    private void pedestrianButtonPress(String crossingId) {
+        System.out.println("Pedestrian button pressed.");
+
+        SimulatorEvent event = SimulatorEvent.pedestrianButtonPressed(crossingId);
+
+        server.sendEvent(event);
     }
 
     //checks if car is too close to the car in front
@@ -2404,7 +2479,17 @@ public class GUIMain{
     }
 
 
-    private record PedLightVisual (Text timer) {}
+    private static final class PedLightVisual {
+        private final Text timer;
+
+        private PedLightVisual(Text timer) {
+            this.timer = timer;
+        }
+
+        public Text getTimer() {
+            return timer;
+        }
+    }
 
     //small private helper class to store car visuals
     private static class CarVisual {

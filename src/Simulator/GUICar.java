@@ -46,6 +46,10 @@ public class GUICar {
         return distance;
     }
 
+    public GUILane getLane() {
+        return myLane;
+    }
+
 
     // Adds to the distance whenever the JavaFX car moves
     public void addDistance(double amount) {

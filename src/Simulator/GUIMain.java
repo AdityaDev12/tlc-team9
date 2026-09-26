@@ -1,10 +1,14 @@
 package Simulator;
 
+import Communication.EMSPriorityState;
+import Communication.PedestrianSignalState;
+import Communication.SimulatorEvent;
 import javafx.animation.KeyFrame;
 import javafx.animation.PauseTransition;
 import javafx.animation.Timeline;
 import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
+import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Group;
 import javafx.scene.Scene;
@@ -22,6 +26,8 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
+import java.security.Key;
+import java.sql.Time;
 import java.util.*;
 
 /*
@@ -102,6 +108,13 @@ public class GUIMain{
             )
     );
 
+    private final List<String> ambulanceImages = List.of(
+            "/cars/Ambulance.png",
+            "/ambulance_animation/1.png",
+            "/ambulance_animation/2.png",
+            "/ambulance_animation/3.png"
+    );
+
     //1 = low traffic, 10 = heavy traffic
     private int traffic = 0; //traffic off by default
 
@@ -110,11 +123,19 @@ public class GUIMain{
 
     private final Random random = new Random();
 
-    private static final double MIN_CAR_SPEED = 1.0;
-    private static final double MAX_CAR_SPEED = 4.0;
+    private static final double MIN_CAR_SPEED = 2.0;
+    private static final double MAX_CAR_SPEED = 3.5;
 
     private Circle emsIndicator;
     private Label emsLabel;
+
+    private PedestrianSignalState pedestrianState = PedestrianSignalState.WAIT;
+    private boolean pedestrianButtonPressed = false;
+
+    private Timeline pedestrianTimer;
+    private int pedestrianTime = 15;
+
+    private SimulatorServer server;
 
     public GUIMain(Stage primaryStage){
         this.primaryStage = primaryStage;
@@ -128,6 +149,10 @@ public class GUIMain{
         trafficLights.put(Bearing.South, new ArrayList<>());
         trafficLights.put(Bearing.East, new ArrayList<>());
         trafficLights.put(Bearing.West, new ArrayList<>());
+    }
+
+    public void setServer(SimulatorServer server) {
+        this.server = server;
     }
 
     public void makeGUI() {
@@ -997,7 +1022,7 @@ public class GUIMain{
         inner.setArcHeight(inner.getHeight()*.8);
         inner.setArcWidth(inner.getWidth()*.8);
 
-        timer = new Text(x + width*.25, y + width*.65, "0");
+        timer = new Text(x + width*.25, y + width*.65, "-");
         timer.setFont(Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 10));
 
         timer.setTextAlignment(TextAlignment.CENTER);
@@ -1023,6 +1048,39 @@ public class GUIMain{
 
         streetPane.getChildren().addAll(housing, inner, timer, button);
         pedLights.add(new PedLightVisual(timer));
+    }
+
+    //visual timer
+    private void startPedestrianTimer() {
+        pedestrianTime = 15;
+
+        //show start time
+        for(PedLightVisual light : pedLights) {
+            light.getTimer().setText(String.valueOf(pedestrianTime));
+        }
+
+        pedestrianTimer = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
+            pedestrianTime--;
+
+            //set new time
+            for(PedLightVisual light : pedLights) {
+                light.getTimer().setText(String.valueOf(pedestrianTime));
+            }
+
+            if(pedestrianTime <= 0) {
+                pedestrianTimer.stop();
+
+                //return to idle
+                for(PedLightVisual light : pedLights) {
+                    light.getTimer().setText("-");
+                }
+
+                pedestrianButtonPressed = false;
+            }
+        }));
+
+        pedestrianTimer.setCycleCount(Timeline.INDEFINITE);
+        pedestrianTimer.play();
     }
 
     //traffic light
@@ -1232,18 +1290,18 @@ public class GUIMain{
 
             case North, East:
                 lanePosition = switch (lightID) {
-                    case 0 -> LanePosition.Right;
+                    case 0 -> LanePosition.Left;
                     case 1 -> LanePosition.Middle;
-                    case 2 -> LanePosition.Left;
+                    case 2 -> LanePosition.Right;
                     default -> null;
                 };
                 break;
 
             case South, West:
                 lanePosition = switch (lightID) {
-                    case 0 -> LanePosition.Left;
+                    case 0 -> LanePosition.Right;
                     case 1 -> LanePosition.Middle;
-                    case 2 -> LanePosition.Right;
+                    case 2 -> LanePosition.Left;
                     default -> null;
                 };
                 break;
@@ -1255,7 +1313,7 @@ public class GUIMain{
         GUILane lane = getLane(direction, lanePosition);
 
         assert lane != null;
-        lane.updateLights(0, color);
+        lane.updateLights(0, color, shape);
 
 
 
@@ -1305,8 +1363,21 @@ public class GUIMain{
         //connect logic car with visual
         CarVisual carVisual = new CarVisual(guiCar, car, speed, lanePosition);
 
+        if (lanePosition != LanePosition.Middle) {
+            Bearing pendingBearing = computeTurnBearing(bearing, lanePosition);
+            double mergeThreshold = getMergeCoordinate(pendingBearing, lanePosition);
+            carVisual.setTurnInfo(pendingBearing, mergeThreshold);
+        }
+
         //store car
         cars.add(carVisual);
+
+        //send ems event to harness
+        if(EMS) {
+            SimulatorEvent event = SimulatorEvent.emsPriority(bearing.name(), EMSPriorityState.REQUEST);
+
+            server.sendEvent(event);
+        }
 
         moveCar(carVisual);
 
@@ -1341,7 +1412,9 @@ public class GUIMain{
                 new PedestrianVisual(
                         pedestrian,
                         walkingFrames,
-                        speed
+                        speed,
+                        firstCrosswalk,
+                        bearing
         );
 
         streetPane.getChildren().add(pedestrian);
@@ -1378,6 +1451,7 @@ public class GUIMain{
     //lane number starts at 0, left to right
     private void positionCar(ImageView car, Bearing bearing, LanePosition lanePosition) {
         int laneNumber = lanePosition.ordinal();
+        laneNumber = LANES_PER_DIRECTION - 1 - laneNumber;
 
         //vertical road
         double roadLeft = (WINDOW_WIDTH - ROAD_WIDTH) / 2;
@@ -1420,6 +1494,47 @@ public class GUIMain{
                 car.setRotate(270);
                 break;
         }
+    }
+
+    private Bearing computeTurnBearing(
+            Bearing entry,
+            LanePosition lanePosition) {
+
+        boolean isLeft = lanePosition == LanePosition.Left;
+
+        return switch (entry) {
+
+            case North -> isLeft ? Bearing.West : Bearing.East;
+            case South -> isLeft ? Bearing.East : Bearing.West;
+            case East -> isLeft ? Bearing.North : Bearing.South;
+            case West -> isLeft ? Bearing.South : Bearing.North;
+        };
+    }
+
+    private double getRotationForBearing(Bearing bearing) {
+        return switch (bearing) {
+            case North -> 0;
+            case South -> 180;
+            case East -> 90;
+            case West -> 270;
+        };
+    }
+
+    // returns the fixed lane coordinate a turning car merges into on its new road
+    // (always the "straight" lane, lane index 1, of the destination approach)
+    private double getMergeCoordinate(Bearing bearing, LanePosition lanePosition) {
+        double roadLeft = (WINDOW_WIDTH - ROAD_WIDTH) / 2;
+        double roadTop = (WINDOW_HEIGHT - ROAD_WIDTH) / 2;
+
+        int laneNumber = lanePosition.ordinal();
+        int physicalLane = LANES_PER_DIRECTION - 1 - laneNumber;
+
+        return switch (bearing) {
+            case North -> roadLeft + (LANES_PER_DIRECTION + physicalLane) * LANE_WIDTH;
+            case South -> roadLeft + (LANES_PER_DIRECTION - 1 - physicalLane) * LANE_WIDTH;
+            case East  -> roadTop + (LANES_PER_DIRECTION + physicalLane) * LANE_WIDTH;
+            case West  -> roadTop + (LANES_PER_DIRECTION - 1 - physicalLane) * LANE_WIDTH;
+        };
     }
 
     private void positionPed(ImageView pedestrian, Bearing bearing, boolean firstCrosswalk) {
@@ -1506,13 +1621,61 @@ public class GUIMain{
         }
     }
 
+    private boolean reachedPedStop(PedestrianVisual pedestrian, Bearing bearing) {
+        ImageView ped = pedestrian.getImageView();
+
+        double intersectionLeft = (WINDOW_WIDTH - ROAD_WIDTH) / 2.0;
+        double intersectionRight = intersectionLeft + ROAD_WIDTH;
+
+        double intersectionTop = (WINDOW_HEIGHT - ROAD_WIDTH) / 2.0;
+        double intersectionBottom = intersectionTop + ROAD_WIDTH;
+
+        double stopDistance = 20;
+
+        return switch (bearing) {
+            case North -> ped.getY() <= intersectionBottom + stopDistance;
+            case South -> ped.getY() >= intersectionTop - stopDistance * 2;
+            case East -> ped.getX() >= intersectionLeft - stopDistance * 2;
+            case West -> ped.getX() <= intersectionRight + stopDistance;
+        };
+
+    }
+
     //animation to move the car
     private void moveCar(CarVisual carVisual) {
 
         ImageView car = carVisual.imageView;
 
         Timeline timeline = new Timeline(new KeyFrame(Duration.millis(16), event -> {
-            Bearing bearing = carVisual.car.getBearing();
+            Bearing bearing = carVisual.getCurrentBearing();
+
+            //check if this car has reached its turn line (only for left/right lanes)
+            if (!carVisual.hasTurned() && carVisual.getLanePosition() != LanePosition.Middle) {
+                double threshold = carVisual.getMergeThreshold();
+                boolean crossedMerge = switch (bearing) {
+                    case North -> car.getY() <= threshold;
+                    case South -> car.getY() >= threshold;
+                    case East  -> car.getX() >= threshold;
+                    case West  -> car.getX() <= threshold;
+                };
+
+                if (reachedIntersection(carVisual)) {
+                    //unprotected left turn
+                    if(carVisual.getLanePosition() == LanePosition.Left
+                            && carVisual.getCar().getLane().getLightShape(0) != LightShape.LeftArrow) {
+
+                        //wait for oncoming traffic
+                        if(hasOncomingTraffic(carVisual)) {
+                            carVisual.setSpeed(0);
+
+                            return;
+                        }
+                    }
+
+                    startTurn(carVisual);
+                    return;
+                }
+            }
 
             CarVisual carAhead = getCarAhead(carVisual);
 
@@ -1567,6 +1730,10 @@ public class GUIMain{
                     break;
             }
 
+            if(carVisual.car.isEMS()) {
+                carVisual.nextFrame();
+            }
+
             carVisual.getCar().addDistance(speed);
 
             CarVisual otherCar = isCollidingWithAnotherCar(carVisual);
@@ -1581,7 +1748,7 @@ public class GUIMain{
                 otherCar.getTimeline().stop();
             }
 
-            if(isOutsideScreen(car, bearing)) {
+            if(isOutsideScreen(car, carVisual.getCurrentBearing())) {
                 removeCar(carVisual);
                 System.out.println("car has been removed.");
             }
@@ -1595,10 +1762,234 @@ public class GUIMain{
         timeline.play();
     }
 
+   //turn the car
+   private void startTurn(CarVisual carVisual) {
+       ImageView car = carVisual.getImageView();
+
+       Bearing startBearing = carVisual.getCurrentBearing();
+
+       boolean leftTurn = carVisual.getLanePosition() == LanePosition.Left;
+
+       Point2D start = new Point2D(car.getX(), car.getY()); //starting point
+
+       Point2D control;
+       Point2D end; //ending point
+
+       double turnDistance;
+
+       //left turns use a wider curve
+       if (leftTurn) {
+           turnDistance = ROAD_WIDTH / 1.5;
+       }
+
+       //right turns use a tighter curve
+       else {
+           turnDistance = ROAD_WIDTH / 6.0;
+       }
+
+       double intersectionLeft = (WINDOW_WIDTH - ROAD_WIDTH) / 2.0;
+
+       double intersectionRight = intersectionLeft + ROAD_WIDTH;
+
+       double intersectionTop = (WINDOW_HEIGHT - ROAD_WIDTH) / 2.0;
+
+       double intersectionBottom = intersectionTop + ROAD_WIDTH;
+
+
+       switch (startBearing) {
+           case North:
+               control = new Point2D(start.getX(), start.getY() - turnDistance);
+
+               if (leftTurn) {
+                   end = new Point2D(intersectionLeft - LANE_WIDTH / 2.0, start.getY() - turnDistance);
+
+               }
+
+               else {
+                   end = new Point2D(intersectionRight + LANE_WIDTH / 2.0, start.getY() - turnDistance);
+               }
+
+               break;
+
+           case South:
+
+               control = new Point2D(start.getX(), start.getY() + turnDistance);
+
+               if (leftTurn) {
+                   end = new Point2D(intersectionRight + LANE_WIDTH / 2.0, start.getY() + turnDistance);
+
+               }
+
+               else {
+
+                   end = new Point2D(intersectionLeft - LANE_WIDTH / 2.0, start.getY() + turnDistance);
+               }
+
+               break;
+
+           case East:
+               control = new Point2D(start.getX() + turnDistance, start.getY());
+
+               if (leftTurn) {
+                   end = new Point2D(start.getX() + turnDistance, intersectionTop - LANE_WIDTH / 2.0);
+               }
+
+               else {
+                   end = new Point2D(start.getX() + turnDistance, intersectionBottom + LANE_WIDTH / 2.0);
+               }
+
+               break;
+
+           case West:
+
+               control = new Point2D(start.getX() - turnDistance, start.getY());
+
+               if (leftTurn) {
+                   end = new Point2D(start.getX() - turnDistance, intersectionBottom + LANE_WIDTH / 2.0);
+               }
+
+               else {
+                   end = new Point2D(start.getX() - turnDistance, intersectionTop - LANE_WIDTH / 2.0);
+               }
+
+               break;
+
+           default:
+               return;
+       }
+
+       //I needed the cars to make smooth turns instead of making
+       //a sharp 90 degree turn, so I researched ways to do this and
+       //found the Beizer curve, which let me define a starting point,
+       //control point, and end point for a car's path.
+
+       moveAlongCurve(carVisual, start, control, end);
+   }
+
+   //moves a car smoothly along a quadratic Bezier curve
+   private void moveAlongCurve(CarVisual carVisual, Point2D start, Point2D control, Point2D end) {
+
+       ImageView car = carVisual.getImageView();
+
+       //stop current movement
+       if (carVisual.getTimeline() != null) {
+           carVisual.getTimeline().stop();
+       }
+
+       //store the progress through the curve
+       //0.0 means the car is at the start
+       //1.0 means the car has reached the end
+       final double[] progress = {0.0};
+       final Timeline[] turnTimeline = new Timeline[1];
+
+       turnTimeline[0] = new Timeline(new KeyFrame(Duration.millis(16), event -> {
+
+           //approximate curve length for converting
+           //pixels/frame into curve progress
+           double approximateTurnLength;
+
+           //different turn speeds based on if turning left or right
+           if(carVisual.getLanePosition() == LanePosition.Left) {
+               approximateTurnLength = ROAD_WIDTH / 1.2;
+           }
+
+           else {
+               approximateTurnLength = ROAD_WIDTH / 4.0;
+           }
+
+           double turnSpeed = 3.0;
+
+           progress[0] += turnSpeed / approximateTurnLength;
+
+           //progress cant be more than 1.0
+           if (progress[0] >= 1.0) {
+               progress[0] = 1.0;
+           }
+
+           double t = progress[0];
+
+           /*
+            * quadratic Bezier Curve Formula:
+            *
+            * B(t) = (1-t)^2 * P0 + 2(1-t)t * P1 + t^2 * P2
+            *
+            * where
+            *
+            * P0 = start
+            * P1 = control
+            * P2 = end
+            *
+            * t = progress from 0.0 to 1.0
+            *
+            * The formula is calculated separately for x and y
+            */
+
+           //x coordinate
+           double x = Math.pow(1 - t, 2) * start.getX() + 2 * (1 - t) * t * control.getX() + Math.pow(t, 2) * end.getX();
+
+           //y cooridnate
+           double y = Math.pow(1 - t, 2) * start.getY() + 2 * (1 - t) * t * control.getY() + Math.pow(t, 2) * end.getY();
+
+           car.setX(x);
+           car.setY(y);
+
+           /*
+            * Derivative of a Beizer Curve
+            *
+            * B'(t) = 2(1-t)(P1-P0) + 2t(P2-P1)
+            *
+            * This gives us the direction that the car is moving
+            * at its current position on the curve
+            */
+
+           double dx = 2 * (1 - t) * (control.getX() - start.getX()) + 2 * t * (end.getX() - control.getX());
+
+           double dy = 2 * (1 - t) * (control.getY() - start.getY()) + 2 * t * (end.getY() - control.getY());
+
+           //calculate the angle of the car's current direction
+           double angle = Math.toDegrees(Math.atan2(dy, dx));
+
+           //rotate the car so it's facing the direction it is traveling
+           car.setRotate(angle + 90);
+
+           //finshed turning
+           if (progress[0] >= 1.0) {
+               turnTimeline[0].stop();
+
+               carVisual.setCurrentBearing(carVisual.getPendingBearing());
+               carVisual.setHasTurned(true);
+
+               //continue driving in the new direction
+               moveCar(carVisual);
+           }
+       }));
+
+       turnTimeline[0].setCycleCount(Timeline.INDEFINITE);
+
+       //store the turning animation
+       carVisual.setTimeline(turnTimeline[0]);
+
+       turnTimeline[0].play();
+   }
+
+
+
     private void movePedestrian(PedestrianVisual pedestrianVisual, Bearing bearing) {
         ImageView pedestrian = pedestrianVisual.getImageView();
 
         Timeline timeline = new Timeline(new KeyFrame(Duration.millis(16), event -> {
+
+            //don't walk
+            if(pedestrianState == PedestrianSignalState.WAIT && reachedPedStop(pedestrianVisual, bearing)) {
+
+                if(!pedestrianButtonPressed) {
+                    pedestrianButtonPressed = true;
+                    pedestrianButtonPress(getCrossingId(bearing));
+                }
+
+                return;
+            }
+
             switch(bearing) {
                 case North:
                     pedestrian.setY(pedestrian.getY() - pedestrianVisual.getSpeed());
@@ -1634,7 +2025,7 @@ public class GUIMain{
             if (leftScreen) {
 
                 removePedestrian(pedestrianVisual);
-                System.out.println("Pedestrian has beedn removed.");
+                System.out.println("Pedestrian has beed removed.");
 
             }
         }));
@@ -1644,6 +2035,32 @@ public class GUIMain{
         pedestrianVisual.setTimeline(timeline);
 
         timeline.play();
+    }
+
+    private String getCrossingId(Bearing bearing) {
+        return switch (bearing) {
+            case North -> "North";
+            case South -> "South";
+            case East -> "East";
+            case West -> "West";
+        };
+    }
+
+    public void setPedestrianState(PedestrianSignalState state) {
+        pedestrianState = state;
+
+        if(state == PedestrianSignalState.WALK) {
+            startPedestrianTimer();
+        }
+
+    }
+
+    private void pedestrianButtonPress(String crossingId) {
+        System.out.println("Pedestrian button pressed.");
+
+        SimulatorEvent event = SimulatorEvent.pedestrianButtonPressed(crossingId);
+
+        server.sendEvent(event);
     }
 
     //checks if car is too close to the car in front
@@ -1660,9 +2077,20 @@ public class GUIMain{
                 continue;
             }
 
+            Bearing otherBearing;
+
+
+            if (otherCar.hasTurned()) {
+                otherBearing = otherCar.getCurrentBearing();
+            }
+
+            else {
+                otherBearing = otherCar.getEntryBearing();
+            }
+
 
             //must be traveling in the same direction
-            if (otherCar.getCurrentBearing() != carVisual.getCurrentBearing()) {
+            if (otherBearing != carVisual.getCurrentBearing()) {
                 continue;
             }
 
@@ -1678,7 +2106,7 @@ public class GUIMain{
 
             Bearing bearing = carVisual.getCurrentBearing();
 
-            double followingDistance = 20;
+            double followingDistance = 60;
 
             switch (bearing) {
 
@@ -1743,8 +2171,8 @@ public class GUIMain{
 
         return switch (carVisual.getCurrentBearing()) {
             case North -> car.getY() < intersectionBottom;
-            case South -> car.getY() > intersectionTop;
-            case East -> car.getX() > intersectionLeft;
+            case South -> car.getY() > intersectionTop - STOPLINE_WIDTH * 4;
+            case East -> car.getX() > intersectionLeft - STOPLINE_WIDTH * 4;
             case West -> car.getX() < intersectionRight;
         };
 
@@ -1797,7 +2225,7 @@ public class GUIMain{
         //traffic = 10; 750 ms between cars
         double spawnInterval = 3000.0 - (traffic - 1) * 250.0;
 
-        carSpawner = new Timeline(new KeyFrame(Duration.millis(spawnInterval), _ -> {
+        carSpawner = new Timeline(new KeyFrame(Duration.millis(spawnInterval), action -> {
             spawnCar(false);
         }));
 
@@ -1965,6 +2393,70 @@ public class GUIMain{
         return null;
     }
 
+    //check if there is oncoming traffic
+    private boolean hasOncomingTraffic(CarVisual turningCar) {
+
+        Bearing bearing = turningCar.getCurrentBearing();
+
+        //only applies to left-turning cars
+        if (turningCar.getLanePosition() != LanePosition.Left) {
+            return false;
+        }
+
+        double centerX = WINDOW_WIDTH / 2.0;
+        double centerY = WINDOW_HEIGHT / 2.0;
+
+        for (CarVisual otherCar : cars) {
+
+            //don't check against itself
+            if (otherCar == turningCar) {
+                continue;
+            }
+
+            boolean isOncoming = isOncoming(otherCar, bearing);
+
+            if (!isOncoming) {
+                continue;
+            }
+
+            //don't block left turn if oncoming traffic is stopped
+            if(otherCar.getSpeed() == 0) {
+                continue;
+            }
+
+            ImageView other = otherCar.getImageView();
+
+            //only check for cars not in a turn lane
+            if(otherCar.getLanePosition() != LanePosition.Middle) {
+                continue;
+            }
+
+            boolean hasPassedCenter = switch (bearing) {
+                case North -> other.getY() > centerY;
+                case South -> other.getY() < centerY;
+                case East -> other.getX() < centerX;
+                case West -> other.getX() > centerX;
+            };
+
+            //oncoming car has not passed the middle yet
+            if (!hasPassedCenter) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static boolean isOncoming(CarVisual otherCar, Bearing bearing) {
+        Bearing otherBearing = otherCar.getCurrentBearing();
+
+        //only check cars coming from the opposite direction
+        return (bearing == Bearing.North && otherBearing == Bearing.South)
+                || (bearing == Bearing.South && otherBearing == Bearing.North)
+                || (bearing == Bearing.East && otherBearing == Bearing.West)
+                || (bearing == Bearing.West && otherBearing == Bearing.East);
+    }
+
     //small private helper class to store traffic lights
     private static class TrafficLightVisual {
         private final Rectangle light;
@@ -2006,10 +2498,20 @@ public class GUIMain{
     }
 
 
-    private record PedLightVisual (Text timer) {}
+    private static final class PedLightVisual {
+        private final Text timer;
+
+        private PedLightVisual(Text timer) {
+            this.timer = timer;
+        }
+
+        public Text getTimer() {
+            return timer;
+        }
+    }
 
     //small private helper class to store car visuals
-    private static class CarVisual {
+    private class CarVisual {
         private final GUICar car;
         private final ImageView imageView;
         private double speed;
@@ -2017,7 +2519,16 @@ public class GUIMain{
         private Timeline timeline;
         private final LanePosition lanePosition;
 
+        private Bearing entryBearing;
+
+        private boolean hasTurned = false;
+        private Bearing pendingBearing;
+        private double mergeThreshold;
+
         private Bearing currentBearing;
+
+        private int currentFrame = 0;
+        private int frameCounter = 0;
 
         public CarVisual(GUICar car, ImageView imageView, double speed, LanePosition lanePosition) {
             this.car = car;
@@ -2027,6 +2538,33 @@ public class GUIMain{
             this.lanePosition = lanePosition;
 
             this.currentBearing = car.getBearing();
+            this.entryBearing = car.getBearing();
+        }
+
+        public void nextFrame() {
+            if(ambulanceImages.isEmpty()) {
+                return;
+            }
+
+            frameCounter++;
+
+            if(frameCounter < 8) {
+                return;
+            }
+
+            frameCounter = 0;
+
+            currentFrame++;
+
+            if(currentFrame >= ambulanceImages.size()) {
+                currentFrame = 0;
+            }
+
+            String imagePath = ambulanceImages.get(currentFrame);
+
+            Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath)));
+
+            imageView.setImage(image);
         }
 
         public Bearing getCurrentBearing() {
@@ -2035,6 +2573,10 @@ public class GUIMain{
 
         public void setCurrentBearing(Bearing currentBearing) {
             this.currentBearing = currentBearing;
+        }
+
+        public Bearing getEntryBearing() {
+            return entryBearing;
         }
 
         public GUICar getCar() {
@@ -2068,6 +2610,27 @@ public class GUIMain{
         public LanePosition getLanePosition() {
             return lanePosition;
         }
+
+        public boolean hasTurned() {
+            return hasTurned;
+        }
+
+        public void setHasTurned(boolean hasTurned) {
+            this.hasTurned = hasTurned;
+        }
+
+        public Bearing getPendingBearing() {
+            return pendingBearing;
+        }
+
+        public double getMergeThreshold() {
+            return mergeThreshold;
+        }
+
+        public void setTurnInfo(Bearing pendingBearing, double mergeThreshold) {
+            this.pendingBearing = pendingBearing;
+            this.mergeThreshold = mergeThreshold;
+        }
     }
 
     //pedestrian visuals
@@ -2077,16 +2640,19 @@ public class GUIMain{
 
         private final double speed;
 
+        private final boolean firstCrosswalk;
+
         private double distanceSinceLastFrame = 0;
 
         private int currentFrame = 0;
 
         private Timeline timeline;
 
-        public PedestrianVisual(ImageView imageView, ArrayList<Image> walkingFrames, double speed) {
+        public PedestrianVisual(ImageView imageView, ArrayList<Image> walkingFrames, double speed, boolean firstCrosswalk, Bearing bearing) {
             this.imageView = imageView;
             this.walkingFrames = walkingFrames;
             this.speed = speed;
+            this.firstCrosswalk = firstCrosswalk;
         }
 
         public ImageView getImageView() {
@@ -2095,6 +2661,10 @@ public class GUIMain{
 
         public double getSpeed() {
             return speed;
+        }
+
+        public boolean isFirstCrosswalk() {
+            return firstCrosswalk;
         }
 
         public int getCurrentFrame() {

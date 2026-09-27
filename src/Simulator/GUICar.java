@@ -5,7 +5,7 @@ public class GUICar {
     private Bearing myBearing;
     private int ID;
     private boolean isAlive = true;
-    private LanePosition lanePosition; //TODO will need to standardise laneNumber
+    private LanePosition lanePosition;
     private double distance;
     private GUIIntersection intersection;
 
@@ -50,6 +50,10 @@ public class GUICar {
         return myLane;
     }
 
+    public boolean isSensorActive() {
+        return sensorActive;
+    }
+
 
     // Adds to the distance whenever the JavaFX car moves
     public void addDistance(double amount) {
@@ -60,28 +64,36 @@ public class GUICar {
     }
 
     private void updateMovement() {
-        if (distance >= 50) {
+        if (distance >= 50 && !sensorActive) {
 
             //activate the lane sensor
-            if (!sensorActive) {
 
-                myLane.updateSensor(0, true);
+            myLane.updateSensor(0, true);
 
-                sensorActive = true;
+            sensorActive = true;
+
+            if (distance >= 100 && sensorActive) {
+
+                myLane.updateSensor(0, false);
+                sensorActive = false;
             }
 
 
-            // Check the current traffic light
-            if (myLane.getLightCol(0) == LightCol.Green) {
+            if(sensorActive) {
+                // Check the current traffic light
+                if (myLane.getLightCol(0) == LightCol.Green) {
 
-                //go
-                allowedToMove = true;
+                    //go
+                    allowedToMove = true;
 
-            } else {
+                } else {
 
-                //stop
-                allowedToMove = false;
+                    //stop
+                    allowedToMove = false;
+                }
             }
+
+
         }
 
     }

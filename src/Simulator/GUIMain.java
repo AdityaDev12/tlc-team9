@@ -2,6 +2,7 @@ package Simulator;
 
 import Communication.EMSPriorityState;
 import Communication.PedestrianSignalState;
+import Communication.SensorState;
 import Communication.SimulatorEvent;
 import javafx.animation.KeyFrame;
 import javafx.animation.PauseTransition;
@@ -1666,13 +1667,6 @@ public class GUIMain{
 
             //check if this car has reached its turn line (only for left/right lanes)
             if (!carVisual.hasTurned() && carVisual.getLanePosition() != LanePosition.Middle) {
-                double threshold = carVisual.getMergeThreshold();
-                boolean crossedMerge = switch (bearing) {
-                    case North -> car.getY() <= threshold;
-                    case South -> car.getY() >= threshold;
-                    case East  -> car.getX() >= threshold;
-                    case West  -> car.getX() <= threshold;
-                };
 
                 if (reachedIntersection(carVisual)) {
                     //unprotected left turn
@@ -1743,6 +1737,38 @@ public class GUIMain{
                 case West:
                     car.setX(car.getX() - speed);
                     break;
+            }
+
+            GUICar logicCar = carVisual.getCar();
+
+            //detected
+            if(logicCar.isSensorActive() && !carVisual.isSensorEventSent()) {
+                carVisual.setSensorEventSent(true);
+
+                if(server != null) {
+                    int laneid = carVisual.getLanePosition().ordinal();
+                    int physicalLane = LANES_PER_DIRECTION - 1 - laneid;
+
+                    System.out.println(physicalLane);
+
+                    SimulatorEvent e = SimulatorEvent.vehicleSensor(String.valueOf(physicalLane), SensorState.DETECTED);
+
+                    server.sendEvent(e);
+                }
+            }
+
+            //cleared
+            if(carVisual.isSensorEventSent() && reachedIntersection(carVisual)) {
+                logicCar.leaveSensor();
+                carVisual.setSensorEventSent(false);
+
+                if(server != null) {
+                    int laneid = carVisual.getLanePosition().ordinal();
+                    int physicalLane = LANES_PER_DIRECTION - 1 - laneid;
+
+                    SimulatorEvent e = SimulatorEvent.vehicleSensor(String.valueOf(physicalLane), SensorState.CLEARED);
+                    server.sendEvent(e);
+                }
             }
 
             if(carVisual.car.isEMS()) {
@@ -2533,8 +2559,9 @@ public class GUIMain{
         private final double originalSpeed;
         private Timeline timeline;
         private final LanePosition lanePosition;
+        private boolean sensorEventSent = false;
 
-        private Bearing entryBearing;
+        private final Bearing entryBearing;
 
         private boolean hasTurned = false;
         private Bearing pendingBearing;
@@ -2638,8 +2665,12 @@ public class GUIMain{
             return pendingBearing;
         }
 
-        public double getMergeThreshold() {
-            return mergeThreshold;
+        public boolean isSensorEventSent() {
+            return sensorEventSent;
+        }
+
+        public void setSensorEventSent(boolean sensorEventSent) {
+            this.sensorEventSent = sensorEventSent;
         }
 
         public void setTurnInfo(Bearing pendingBearing, double mergeThreshold) {

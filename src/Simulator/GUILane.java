@@ -27,9 +27,12 @@ public class GUILane {
     private void makeSensors() {
         mySensors = new ArrayList<>();
 
-        GUISensor sensor = new GUISensor(0);
+        //3 sensors per lane
+        for(int i = 0; i < 3; i++) {
+            GUISensor sensor = new GUISensor(i);
+            mySensors.add(sensor);
+        }
 
-        mySensors.add(sensor);
     }
 
     public LightShape getLightShape(int lightID) {

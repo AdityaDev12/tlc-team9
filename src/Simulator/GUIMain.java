@@ -299,9 +299,9 @@ public class GUIMain{
 
         Button spawnCarButton = new Button("Spawn Car");
         Button spawnEMSButton = new Button("Spawn EMS");
-        Button spawnPedestrian = new Button("Spawn Person");
+        Button spawnPedestrianButton = new Button("Spawn Person");
 
-        Button clearAllCars = new Button("Clear All Cars");
+        Button clearAll = new Button("Clear All");
 
         trafficSlider.setShowTickLabels(true);
         trafficSlider.setShowTickMarks(true);
@@ -344,13 +344,28 @@ public class GUIMain{
             cooldown.play();
         });
 
-        spawnPedestrian.setOnAction(event -> {
+        spawnPedestrianButton.setOnAction(event -> {
             spawnPedestrian();
+
+            //cool down between spawns
+            spawnPedestrianButton.setDisable(true);
+
+            PauseTransition cooldown = new PauseTransition(Duration.seconds(3));
+
+            cooldown.setOnFinished(nxtEvent -> {
+                spawnPedestrianButton.setDisable(false);
+            });
+
+            cooldown.play();
         });
 
-        clearAllCars.setOnAction(event -> {
+        clearAll.setOnAction(event -> {
             for(CarVisual car : new ArrayList<>(cars)) {
                 removeCar(car);
+            }
+
+            for(PedestrianVisual pedestrian : new ArrayList<>(pedestrians)) {
+                removePedestrian(pedestrian);
             }
         });
 
@@ -359,8 +374,8 @@ public class GUIMain{
                 trafficSlider,
                 spawnCarButton,
                 spawnEMSButton,
-                spawnPedestrian,
-                clearAllCars
+                spawnPedestrianButton,
+                clearAll
         );
 
         controls.setLayoutX(20);

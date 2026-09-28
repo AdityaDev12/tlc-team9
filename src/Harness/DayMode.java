@@ -3,20 +3,36 @@ package Harness;
 import java.util.Timer;
 
 public class DayMode {
-    private TrafficSensor trafficSensor;
     private TrafficLights trafficLights;
     private Timer timer;
 
     public DayMode(
-            TrafficSensor trafficSensor,
             TrafficLights trafficLights,
             Timer timer) {
-        this.trafficSensor = trafficSensor;
         this.trafficLights = trafficLights;
         this.timer = timer;
     }
 
-    public void run() {
-        // implement day mode control logic here
+    public void run() throws InterruptedException {
+        //NS Green Arrow
+        trafficLights.setLightPattern(LightPattern.NS_ARROW_GREEN);
+        timer.wait(15000);
+
+        trafficLights.setLightPattern(LightPattern.NS_ARROW_YELLOW);
+        timer.wait(5000);
+
+        trafficLights.setLightPattern(LightPattern.NS_GREEN);
+        timer.wait(20000);
+
+        trafficLights.setLightPattern(LightPattern.NS_YELLOW);
+        timer.wait(5000);
+
+        trafficLights.setLightPattern(LightPattern.ALL_RED);
+        timer.wait(2000);
+
+        if (isEMSReq() == true){
+
+        }
+
     }
 }

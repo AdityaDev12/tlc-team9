@@ -5,8 +5,11 @@ import Simulator.Bearing;
 public class EMSVehicle {
     private boolean NSActive;
     private boolean EWActive;
+    private Mux mux;
 
-    public EMSVehicle() {
+
+    public EMSVehicle(Mux mux) {
+        this.mux = mux;
     }
 
     public void incomingEMSVehicle(Bearing EMSBearing) {

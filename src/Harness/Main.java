@@ -20,19 +20,20 @@ public class Main {
             Mux mux = new Mux(); // connects to simulator
 
             // interface TLC to GUI
-            TrafficSensor trafficSensor = new TrafficSensor(mux);
+            TrafficSensor trafficSensor = new TrafficSensor(mux, Bearing.West);//temp bearing
             TrafficLights trafficLights = new TrafficLights(mux);
             Antenna antenna = new Antenna(mux);
             Pedestrian pedestrian = new Pedestrian(mux);
+            EMSVehicle EMS = new EMSVehicle(mux);
             Timer timer = new Timer();
             Clock clock = new Clock();
 
             // operating modes
             DayMode dayMode = new DayMode(
-                    trafficSensor, trafficLights, timer
+                    trafficLights, timer, EMS
             );
             NightMode nightMode = new NightMode(
-                    trafficSensor, trafficLights, timer
+                    trafficSensor, trafficLights, timer, EMS
             );
             EMSMode emsMode = new EMSMode(
                     antenna, trafficLights, timer

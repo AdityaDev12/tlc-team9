@@ -1,7 +1,5 @@
 package Harness;
 
-import Simulator.Bearing;
-
 import java.util.Timer;
 
 public class DayMode {

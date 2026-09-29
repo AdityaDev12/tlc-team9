@@ -19,17 +19,18 @@ public class Main {
         Mux mux = null;
         try {
             mux = new Mux(); // connects to simulator
+            final Mux connectedMux = mux; // final reference for event-receiver
 
-            // TLC interface objects
-            TrafficSensor trafficSensor = new TrafficSensor(mux, Bearing.West);//temp bearing for testing
-            TrafficLights trafficLights = new TrafficLights(mux);
-            Antenna antenna = new Antenna(mux);
-            Pedestrian pedestrian = new Pedestrian(mux);
-            EMSVehicle emsVehicle = new EMSVehicle(mux);
+            // creates TLC interface objects
+            TrafficSensor trafficSensor = new TrafficSensor(connectedMux, Bearing.West);//temp bearing for testing
+            TrafficLights trafficLights = new TrafficLights(connectedMux);
+            Antenna antenna = new Antenna(connectedMux);
+            Pedestrian pedestrian = new Pedestrian(connectedMux);
+            EMSVehicle emsVehicle = new EMSVehicle(connectedMux);
             Timer timer = new Timer();
             Clock clock = new Clock();
 
-            // operating modes
+            // creates operating modes
             DayMode dayMode = new DayMode(
                     trafficLights, timer, emsVehicle
             );
@@ -43,23 +44,42 @@ public class Main {
                     pedestrian, trafficLights, timer
             );
 
-            // mode control
+            // creates mode control
             ModeControl modeControl = new ModeControl (
                     dayMode, nightMode, emsMode, pedestrianMode, clock
             );
 
             System.out.println("Traffic Light Controller initialized.");
 
-            // start TLC
             /**
              * Need:
-             * receive events from Sim through Mux,
-             * send events to correct interface object
-             * notify ModeControl of ped/emsRequest
+             * [IN REVISION] receive events from Sim through Mux,
+             * [ONGOING] send events to correct interface object
+             * [ONGOING] notify ModeControl of ped/emsRequest
              * enable ModeControl selection of mode
              * execute selected mode
              */
 
+            // listens for events from Simulator
+            Thread eventReceiver = new Thread(() -> {
+                try {
+                    while (true) {
+                        SimulatorEvent event = connectedMux.receiveEvent();
+                        if (event == null) {
+                            System.out.println("Simulator connection closed.");
+                            break;
+                        }
+                        handleSimulatorEvent(
+                                event, trafficSensor, pedestrian, emsVehicle, modeControl
+                        );
+                    }
+                } catch (IOException e) {
+                    System.err.println("ERROR: HarnessMain lost connection to Simulator");
+                    e.printStackTrace();;
+                }
+            }, "SimulatorEventReceiver");
+        eventReceiver.setDaemon(true);
+        eventReceiver.start();
         } catch (IOException e) {
             System.err.println("ERROR: HarnessMain unable to connect TLC to Simulator");
             e.printStackTrace();
@@ -72,6 +92,55 @@ public class Main {
                     System.err.println("ERROR: Unable to close Mux connection.");
                 }
             }
+        }
+    }
+
+    public static void handleSimulatorEvent(
+            SimulatorEvent event,
+            TrafficSensor trafficSensor,
+            Pedestrian pedestrian,
+            EMSVehicle emsVehicle,
+            ModeControl modeControl) {
+        switch (event.getCommand()) {
+            case VEHICLE_DETECTED:
+                System.out.println("HMain: Vehicle detected: " + event.getTarget());
+                /**
+                 * temporary; for one trafficsensor object configured for bearing.West
+                 * need to map lane IDs to individual sensors for updates
+                 */
+                trafficSensor.vehicleDetected();
+                break;
+
+            case PEDESTRIAN_BUTTON_PRESSED:
+                System.out.println("HMain: Pedestrian button pressed: " + event.getTarget());
+                pedestrian.pedRequest();
+                modeControl.setPedRequest(true);
+                break;
+
+            case EMS_PRIORITY_REQUEST:
+                System.out.println("HMain: EMS priority requested: " + event.getTarget());
+                /**
+                 * EMS event handling not connected yet
+                 * SimEvent stores bearing as String
+                 * EMSVehicle needs Bearing
+                 */
+                break;
+
+            case UPDATE_PEDESTRIAN_SIGNAL:
+                System.out.println("HMain: Pedestrian signal update: " + event.getTarget() + " = " + event.getValue());
+                break;
+
+            case RESUME_NORMAL:
+                System.out.println("HMain: Simulator requested normal operation.");
+                break;
+
+            case SET_LIGHT_STATE:
+                /**
+                 * SET_LIGHT_STATE is TLC -> Sim instruction
+                 * now sent back as an event
+                 */
+                System.out.println("HMain: Received unexpected SET_LIGHT_STATE event");
+                break;
         }
     }
 }

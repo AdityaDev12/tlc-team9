@@ -16,24 +16,25 @@ public class Main {
 
     public static void main(String[] args) {
         System.out.println("Starting Traffic Light Controller...");
+        Mux mux = null;
         try {
-            Mux mux = new Mux(); // connects to simulator
+            mux = new Mux(); // connects to simulator
 
-            // interface TLC to GUI
-            TrafficSensor trafficSensor = new TrafficSensor(mux, Bearing.West);//temp bearing
+            // TLC interface objects
+            TrafficSensor trafficSensor = new TrafficSensor(mux, Bearing.West);//temp bearing for testing
             TrafficLights trafficLights = new TrafficLights(mux);
             Antenna antenna = new Antenna(mux);
             Pedestrian pedestrian = new Pedestrian(mux);
-            EMSVehicle EMS = new EMSVehicle(mux);
+            EMSVehicle emsVehicle = new EMSVehicle(mux);
             Timer timer = new Timer();
             Clock clock = new Clock();
 
             // operating modes
             DayMode dayMode = new DayMode(
-                    trafficLights, timer, EMS
+                    trafficLights, timer, emsVehicle
             );
             NightMode nightMode = new NightMode(
-                    trafficSensor, trafficLights, timer, EMS
+                    trafficSensor, trafficLights, timer, emsVehicle
             );
             EMSMode emsMode = new EMSMode(
                     antenna, trafficLights, timer
@@ -47,71 +48,30 @@ public class Main {
                     dayMode, nightMode, emsMode, pedestrianMode, clock
             );
 
+            System.out.println("Traffic Light Controller initialized.");
+
             // start TLC
             /**
-             * Need: Receive events from Sim,
-             * update TLC interface object,
-             * allow ModeControl selection,
-             * execute selection
+             * Need:
+             * receive events from Sim through Mux,
+             * send events to correct interface object
+             * notify ModeControl of ped/emsRequest
+             * enable ModeControl selection of mode
+             * execute selected mode
              */
-
-
-            Scanner scanner = new Scanner(System.in);
-            while (true) {
-                System.out.println();
-                System.out.println("=================================");
-                System.out.println(" Traffic Light Controller Harness");
-                System.out.println("=================================");
-                System.out.println("1. Traffic Light Command");
-                System.out.println("2. Pedestrian Signal Command");
-                System.out.println("3. EMS Priority Command");
-                System.out.println("Type 'quit' to exit.");
-                System.out.print("> ");
-
-                String choice = scanner.nextLine().trim();
-
-                if (choice.equalsIgnoreCase("quit")) {
-                    break;
-                }
-
-                switch (choice) {
-                    case "1" : // Traffic light command
-                        System.out.println();
-                        System.out.println("Format:");
-                        System.out.println("SET_LIGHT_STATE:lightID:color:shape:position");
-                        System.out.println("Example:");
-                        System.out.println("SET_LIGHT_STATE:2:Green:Square:North");
-                        System.out.print("> ");
-                        String lightCommand = scanner.nextLine().trim();
-                        try {
-                            InstructionMessage message = InstructionMessage.parse(lightCommand);
-                            mux.sendInstruction(message);
-                        } catch (IllegalArgumentException e) {
-                            System.out.println("Invalid traffic light command.");
-                            System.out.println("HarnessMain: " + e.getMessage());
-                        }
-                        break;
-
-                    case "2": // Pedestrian command - all signals activate, all traffic lights turn red
-                        System.out.println();
-                        System.out.println("Pedestrian commands not implemented yet");
-                        break;
-
-                    case "3": // EMS command - antenna blinks, all traffic lights turn red
-                        System.out.println();
-                        System.out.println("EMS commands not implemented yet");
-                        break;
-
-                    default:
-                        System.out.println("Invalid selection.");
-                }
-            }
-            scanner.close();
-            mux.close();
 
         } catch (IOException e) {
             System.err.println("ERROR: HarnessMain unable to connect TLC to Simulator");
             e.printStackTrace();
+
+        } finally {
+            if (mux != null) {
+                try {
+                    mux.close();
+                } catch (IOException e) {
+                    System.err.println("ERROR: Unable to close Mux connection.");
+                }
+            }
         }
     }
 }

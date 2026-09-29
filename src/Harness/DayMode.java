@@ -13,7 +13,7 @@ public class DayMode {
             Timer timer, EMSVehicle emsVehicle) {
         this.trafficLights = trafficLights;
         this.timer = timer;
-        this.emsVehicle = new EMSVehicle();
+        this.emsVehicle = emsVehicle;
     }
 
     public void run() throws InterruptedException {

@@ -30,7 +30,7 @@ public class EMSVehicle {
         }
     }
     public boolean isEMSActive() {
-        return NSActive && EWActive;
+        return NSActive || EWActive;
     }
     public boolean isNSActive() {
         return NSActive;

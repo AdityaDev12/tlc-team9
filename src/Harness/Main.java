@@ -118,12 +118,17 @@ public class Main {
                 break;
 
             case EMS_PRIORITY_REQUEST:
+                Bearing requestBearing = event.getBearing();
                 System.out.println("HMain: EMS priority requested: " + event.getTarget());
-                /**
-                 * EMS event handling not connected yet
-                 * SimEvent stores bearing as String
-                 * EMSVehicle needs Bearing
-                 */
+                emsVehicle.incomingEMSVehicle(requestBearing);
+                modeControl.setEmsRequest(true);
+                break;
+
+            case EMS_PRIORITY_CANCEL:
+                Bearing cancelBearing = event.getBearing();
+                System.out.println("HMain: EMS priority cleared: " + event.getTarget());
+                emsVehicle.incomingEMSVehicle(cancelBearing);
+                modeControl.setEmsRequest(false);
                 break;
 
             case UPDATE_PEDESTRIAN_SIGNAL:

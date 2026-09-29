@@ -3,6 +3,7 @@ package Communication;
 import Communication.EMSPriorityState;
 import Communication.PedestrianSignalState;
 import Communication.SensorState;
+import Simulator.Bearing;
 
 /**
  * EVENT:target:value
@@ -46,9 +47,9 @@ public class SimulatorEvent {
         return new SimulatorEvent(command, laneId, state.name());
     }
 
-    public static SimulatorEvent emsPriority(String direction, EMSPriorityState state) {
+    public static SimulatorEvent emsPriority(Bearing bearing, EMSPriorityState state) {
         TLCCommand command = (state == EMSPriorityState.REQUEST) ? TLCCommand.EMS_PRIORITY_REQUEST : TLCCommand.EMS_PRIORITY_CANCEL;
-        return new SimulatorEvent(command, direction, state.name());
+        return new SimulatorEvent(command, bearing.name(), state.name());
     }
 
     public static SimulatorEvent triggerFailSafe(String mode) {
@@ -64,6 +65,16 @@ public class SimulatorEvent {
      */
     public String toWireFormat() {
         return String.join(DELIMITER, command.name(), target, value);
+    }
+
+    /**
+     * Convert Bearing String into Bearing Enum
+     */
+    public Bearing getBearing() {
+        if (command != TLCCommand.EMS_PRIORITY_REQUEST && command != TLCCommand.EMS_PRIORITY_CANCEL) {
+            throw new IllegalStateException("SimulatorEvent: Event doesn't contain an EMS bearing: " + command);
+        }
+        return Bearing.fromWire(target);
     }
 
     /**
@@ -86,6 +97,9 @@ public class SimulatorEvent {
         String value = parts[2];
         return new SimulatorEvent(command, target, value);
     }
+
+
+
     @Override
     public String toString() {
         return toWireFormat();

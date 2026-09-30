@@ -71,12 +71,11 @@ public class TrafficLights {
 
     private void setAllRed(Position direction) {
         for (int lightID = 0; lightID < 3; lightID++) {
-            LightShape shape = getShape(direction, lightID);
             InstructionMessage message = new InstructionMessage(
                     TLCCommand.SET_LIGHT_STATE,
                     lightID,
                     LightCol.Red,
-                    shape,
+                    LightShape.Square,
                     direction
             );
             mux.sendInstruction(message);
@@ -86,12 +85,11 @@ public class TrafficLights {
     // all three lights for one direction set to same color
     private void setDirectionColor(Position direction, LightCol color) {
         for (int lightID = 0; lightID <3; lightID++) {
-            LightShape shape = getShape(direction, lightID);
             InstructionMessage message = new InstructionMessage(
                     TLCCommand.SET_LIGHT_STATE,
                     lightID,
                     color,
-                    shape,
+                    LightShape.Square,
                     direction
             );
             mux.sendInstruction(message);

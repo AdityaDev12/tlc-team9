@@ -3,7 +3,6 @@ import Communication.SimulatorEvent;
 import Simulator.*;
 
 import java.io.IOException;
-import java.util.Timer;
 
 /**
  * Constructs the TLC,
@@ -28,7 +27,7 @@ public class Main {
             Antenna antenna = new Antenna(connectedMux);
             Pedestrian pedestrian = new Pedestrian(connectedMux);
             EMSVehicle emsVehicle = new EMSVehicle(connectedMux);
-            Timer timer = new Timer();
+            TLCTimer timer = new TLCTimer();
             Clock clock = new Clock();
 
             // creates operating modes

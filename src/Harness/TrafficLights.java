@@ -41,6 +41,7 @@ public class TrafficLights {
                 setNorthSouthArrowPattern(LightCol.Yellow);
                 setDirectionColor(Position.East, LightCol.Red);
                 setDirectionColor(Position.West, LightCol.Red);
+                break;
             case EW_GREEN:
                 setDirectionColor(Position.North, LightCol.Red);
                 setDirectionColor(Position.South, LightCol.Red);
@@ -115,7 +116,7 @@ public class TrafficLights {
             case South:
             case West:
                 return switch (lightID) {
-                    case 0, 1 -> LightShape.RightArrow;
+                    case 0, 1 -> LightShape.Square;
                     case 2 -> LightShape.LeftArrow;
                     default -> throw new IllegalArgumentException("TrafficLights: Invalid light ID: " + lightID);
                 };

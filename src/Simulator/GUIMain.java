@@ -205,8 +205,8 @@ public class GUIMain{
 
             LightShape shape = switch (lane) {
                 case 0 -> LightShape.LeftArrow;
-                case 2 -> LightShape.RightArrow;
-                default -> LightShape.Square;
+                case 1, 2 -> LightShape.Square;
+                default -> throw new IllegalArgumentException("GUIMain: Invalid northbound lane: " + lane);
             };
 
             drawTrafficLight(x, y, Bearing.North, shape);
@@ -218,9 +218,9 @@ public class GUIMain{
             double y = intersectionTop - LINE_LENGTH + STOPLINE_WIDTH * 2;
 
             LightShape shape = switch (lane) {
-                case 0 -> LightShape.RightArrow;
+                case 0, 1 -> LightShape.Square;
                 case 2 -> LightShape.LeftArrow;
-                default -> LightShape.Square;
+                default -> throw new IllegalArgumentException("GUIMain: Invalid southbound lane: " + lane);
             };
 
             drawTrafficLight(x, y, Bearing.South, shape);
@@ -232,9 +232,9 @@ public class GUIMain{
             double y = intersectionTop + (lane * LANE_WIDTH) + (LANE_WIDTH / 2.0);
 
             LightShape shape = switch (lane) {
-                case 0 -> LightShape.RightArrow;
+                case 0, 1 -> LightShape.Square;
                 case 2 -> LightShape.LeftArrow;
-                default -> LightShape.Square;
+                default -> throw new IllegalArgumentException("GUIMain: Invalid westbound lane: " + lane);
             };
 
             drawTrafficLight(x, y, Bearing.West, shape);
@@ -247,8 +247,8 @@ public class GUIMain{
 
             LightShape shape = switch (lane) {
                 case 0 -> LightShape.LeftArrow;
-                case 2 -> LightShape.RightArrow;
-                default -> LightShape.Square;
+                case 1, 2 -> LightShape.Square;
+                default -> throw new IllegalArgumentException("GUIMain: Invalid eastbound lane: " + lane);
             };
 
             drawTrafficLight(x, y, Bearing.East, shape);
@@ -1206,6 +1206,7 @@ public class GUIMain{
 
     //change traffic light colors
     public void changeTrafficLight(int lightID, LightCol color, LightShape shape, Bearing direction) {
+        System.out.println("GUIMain: Change light: direction = " + direction + ", ID = " + lightID + ", shape = " + shape + ", color = " + color);
         //find light associated with directional group
         ArrayList<TrafficLightVisual> directionalLights = trafficLights.get(direction);
 

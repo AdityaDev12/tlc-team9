@@ -73,7 +73,7 @@ public class SimulatorServer {
         System.out.println("Handling instruction: " + message.toWireFormat());
         // SET_LIGHT_STATE
         if (message.getCommand() == TLCCommand.SET_LIGHT_STATE) {
-            Bearing guiBearing = directionToBearing(message.getDirection());
+            Bearing guiBearing = Bearing.valueOf(message.getDirection().name());
             Platform.runLater(() -> {
                 gui.changeTrafficLight(message.getLightID(), message.getColor(), message.getShape(), guiBearing);
             });
@@ -92,15 +92,5 @@ public class SimulatorServer {
             socket.close();
         }
         System.out.println("Simulator connection closed.");
-    }
-
-    // Converts bearing into physical position
-    private Bearing directionToBearing(Position position) {
-        return switch (position) {
-            case North -> Bearing.South;
-            case South -> Bearing.North;
-            case East -> Bearing.West;
-            case West -> Bearing.East;
-        };
     }
 }

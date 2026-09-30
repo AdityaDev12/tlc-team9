@@ -15,10 +15,10 @@ public class TrafficLights {
     public void setLightPattern(LightPattern pattern) {
         switch (pattern) {
             case ALL_RED:
-                setDirectionColor(Position.North, LightCol.Red);
-                setDirectionColor(Position.South, LightCol.Red);
-                setDirectionColor(Position.East, LightCol.Red);
-                setDirectionColor(Position.West, LightCol.Red);
+                setAllRed(Position.North);
+                setAllRed(Position.South);
+                setAllRed(Position.East);
+                setAllRed(Position.West);
                 break;
             case NS_GREEN:
                 setDirectionColor(Position.North, LightCol.Green);
@@ -68,6 +68,21 @@ public class TrafficLights {
                 throw new IllegalArgumentException("TrafficLights: Unknown light pattern: " + pattern);
         }
     }
+
+    private void setAllRed(Position direction) {
+        for (int lightID = 0; lightID < 3; lightID++) {
+            LightShape shape = getShape(direction, lightID);
+            InstructionMessage message = new InstructionMessage(
+                    TLCCommand.SET_LIGHT_STATE,
+                    lightID,
+                    LightCol.Red,
+                    shape,
+                    direction
+            );
+            mux.sendInstruction(message);
+        }
+    }
+
     // all three lights for one direction set to same color
     private void setDirectionColor(Position direction, LightCol color) {
         for (int lightID = 0; lightID <3; lightID++) {

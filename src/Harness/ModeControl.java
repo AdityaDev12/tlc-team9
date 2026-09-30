@@ -3,17 +3,17 @@ package Harness;
 import Simulator.Bearing;
 
 public class ModeControl {
-    private DayMode dayMode;
-    private NightMode nightMode;
-    private EMSMode emsMode;
-    private PedestrianMode pedestrianMode;
-    private Clock clock;
+    private final DayMode dayMode;
+    private final NightMode nightMode;
+    private final EMSMode emsMode;
+    private final PedestrianMode pedestrianMode;
+    private final Clock clock;
 
     // conditions
     private boolean pedRequest;
     private boolean emsRequest;
-
     private volatile Bearing emsBearing;
+    private boolean nextNS = true;
 
     public ModeControl(
             DayMode dayMode,
@@ -58,19 +58,29 @@ public class ModeControl {
         while(!Thread.currentThread().isInterrupted()) {
             try {
                 // EMS always has priority
-                if (emsRequest && emsBearing != null) {
+                if (hasEmsRequest() && getEmsBearing() != null) {
                     emsMode.run();
                     continue;
                 }
                 // pedestrian requests have priority over day/night modes
-                if (pedRequest) {
+                if (hasPedRequest()) {
                     pedestrianMode.handlePedRequest();
-                    pedRequest = false;
+                    setPedRequest(false);
                     continue;
                 }
                 // select day or night based on clock
                 if (clock.isDayTime()) {
-                    dayMode.run();
+                    if (nextNS) {
+                        System.out.println("ModeControl: Staring NS Day cycle.");
+                        dayMode.runNS();
+                        nextNS = false;
+                        System.out.println("ModeControl: NS cycle finished.");
+                    }else {
+                        System.out.println("ModeControl: Staring EW Day cycle.");
+                        dayMode.runEW();
+                        nextNS = true;
+                        System.out.println("ModeControl: EW cycle finished.");
+                    }
                 } else {
                     nightMode.run();
                 }

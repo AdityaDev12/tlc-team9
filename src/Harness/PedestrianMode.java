@@ -18,13 +18,15 @@ public class PedestrianMode {
         this.timer = timer;
     }
 
-    public void handlePedRequest() {
+    public void handlePedRequest() throws InterruptedException{
         if(pedestrian.getState() == PedestrianSignalState.WAIT) {
             System.out.println("PedestrianMode: Starting ped crossing.");
             //walk
             pedestrian.pedWalk();
             System.out.println("PedestrianMode: Starting signal set to WALK.");
-            timer.schedule(this::timeout, duration);
+            timer.waitFor(duration);
+            pedestrian.pedStop();
+            System.out.println("PedestrianMode: Ped crossing finished.");
         }
     }
 

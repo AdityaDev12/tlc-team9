@@ -32,11 +32,6 @@ public class NightMode {
             timer.waitFor(2000);
 
             // EW Green traffic turn
-            trafficLights.setLightPattern(LightPattern.EW_ARROW_GREEN);
-            timer.waitFor(5000);
-
-            trafficLights.setLightPattern(LightPattern.EW_ARROW_YELLOW);
-            timer.waitFor(5000);
 
             trafficLights.setLightPattern(LightPattern.EW_GREEN);
             timer.waitFor(10000);
@@ -47,12 +42,6 @@ public class NightMode {
             trafficLights.setLightPattern(LightPattern.ALL_RED);
             timer.waitFor(2000);
 
-            // Protected left turns for NS
-            trafficLights.setLightPattern(LightPattern.NS_ARROW_GREEN);
-            timer.waitFor(10000);
-
-            trafficLights.setLightPattern(LightPattern.NS_ARROW_YELLOW);
-            timer.waitFor(5000);
         }
     }
 }

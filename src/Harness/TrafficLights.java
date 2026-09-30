@@ -68,6 +68,7 @@ public class TrafficLights {
                 throw new IllegalArgumentException("TrafficLights: Unknown light pattern: " + pattern);
         }
     }
+    // all three lights for one direction set to same color
     private void setDirectionColor(Position direction, LightCol color) {
         for (int lightID = 0; lightID <3; lightID++) {
             LightShape shape = getShape(direction, lightID);
@@ -93,10 +94,17 @@ public class TrafficLights {
     private void setDirectionArrowPattern(Position direction, LightCol color) {
         for (int lightID = 0; lightID < 3; lightID++) {
             LightShape shape = getShape(direction,lightID);
+            // left turn lane gets color, through lanes stay red
+            LightCol lightColor;
+            if (shape == LightShape.LeftArrow) {
+                lightColor = color;
+            } else {
+                lightColor = LightCol.Red;
+            }
             InstructionMessage message = new InstructionMessage(
                     TLCCommand.SET_LIGHT_STATE,
                     lightID,
-                    color,
+                    lightColor,
                     shape,
                     direction
             );

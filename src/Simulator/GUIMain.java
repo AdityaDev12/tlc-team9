@@ -27,8 +27,6 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
-import java.security.Key;
-import java.sql.Time;
 import java.util.*;
 
 /*
@@ -322,9 +320,7 @@ public class GUIMain{
 
             PauseTransition cooldown = new PauseTransition(Duration.seconds(3));
 
-            cooldown.setOnFinished(nxtEvent -> {
-                spawnCarButton.setDisable(false);
-            });
+            cooldown.setOnFinished(nxtEvent -> spawnCarButton.setDisable(false));
 
             cooldown.play();
         });
@@ -338,9 +334,7 @@ public class GUIMain{
 
             PauseTransition cooldown = new PauseTransition(Duration.seconds(3));
 
-            cooldown.setOnFinished(nxtEvent -> {
-                spawnEMSButton.setDisable(false);
-            });
+            cooldown.setOnFinished(nxtEvent -> spawnEMSButton.setDisable(false));
 
             cooldown.play();
         });
@@ -353,9 +347,7 @@ public class GUIMain{
 
             PauseTransition cooldown = new PauseTransition(Duration.seconds(3));
 
-            cooldown.setOnFinished(nxtEvent -> {
-                spawnPedestrianButton.setDisable(false);
-            });
+            cooldown.setOnFinished(nxtEvent -> spawnPedestrianButton.setDisable(false));
 
             cooldown.play();
         });
@@ -1528,15 +1520,6 @@ public class GUIMain{
         };
     }
 
-    private double getRotationForBearing(Bearing bearing) {
-        return switch (bearing) {
-            case North -> 0;
-            case South -> 180;
-            case East -> 90;
-            case West -> 270;
-        };
-    }
-
     // returns the fixed lane coordinate a turning car merges into on its new road
     // (always the "straight" lane, lane index 1, of the destination approach)
     private double getMergeCoordinate(Bearing bearing, LanePosition lanePosition) {
@@ -1750,8 +1733,6 @@ public class GUIMain{
                     int laneid = carVisual.getLanePosition().ordinal();
                     int physicalLane = LANES_PER_DIRECTION - 1 - laneid;
 
-                    System.out.println(physicalLane);
-
                     SimulatorEvent e = SimulatorEvent.vehicleSensor(String.valueOf(physicalLane), SensorState.DETECTED);
 
                     server.sendEvent(e);
@@ -1901,7 +1882,7 @@ public class GUIMain{
        }
 
        //I needed the cars to make smooth turns instead of making
-       //a sharp 90 degree turn, so I researched ways to do this and
+       //a sharp 90-degree turn, so I researched ways to do this and
        //found the Beizer curve, which let me define a starting point,
        //control point, and end point for a car's path.
 
@@ -2032,6 +2013,14 @@ public class GUIMain{
                 return;
             }
 
+            //don't hit another pedestrian
+            PedestrianVisual pedestrianAhead = getPedestrianAhead(pedestrianVisual);
+
+            if(pedestrianAhead != null) {
+                return;
+            }
+
+            //move pedestrian
             switch(bearing) {
                 case North:
                     pedestrian.setY(pedestrian.getY() - pedestrianVisual.getSpeed());
@@ -2198,6 +2187,78 @@ public class GUIMain{
 
 
         return null;
+    }
+
+    private PedestrianVisual getPedestrianAhead(PedestrianVisual pedestrianVisual) {
+        ImageView pedestrian = pedestrianVisual.getImageView();
+
+        for(PedestrianVisual otherPedestrian : pedestrians) {
+            //don't check with itself
+            if(otherPedestrian == pedestrianVisual) {
+                continue;
+            }
+
+            //must be traveling in the same direction
+            if(otherPedestrian.getBearing() != pedestrianVisual.getBearing()) {
+                continue;
+            }
+
+            ImageView other = otherPedestrian.getImageView();
+
+            Bearing bearing = pedestrianVisual.getBearing();
+
+            double followingDistance = 25;
+
+            switch (bearing) {
+
+                case North:
+
+                    if (other.getY() < pedestrian.getY()
+                            && pedestrian.getY() - other.getY()
+                            < pedestrian.getFitHeight() + followingDistance) {
+
+                        return otherPedestrian;
+                    }
+
+                    break;
+
+                case South:
+
+                    if (other.getY() > pedestrian.getY()
+                            && other.getY() - pedestrian.getY()
+                            < pedestrian.getFitHeight() + followingDistance) {
+
+                        return otherPedestrian;
+                    }
+
+                    break;
+
+                case East:
+
+                    if (other.getX() > pedestrian.getX()
+                            && other.getX() - pedestrian.getX()
+                            < pedestrian.getFitWidth() + followingDistance) {
+
+                        return otherPedestrian;
+                    }
+
+                    break;
+
+                case West:
+
+                    if (other.getX() < pedestrian.getX()
+                            && pedestrian.getX() - other.getX()
+                            < pedestrian.getFitWidth() + followingDistance) {
+
+                        return otherPedestrian;
+                    }
+
+                    break;
+            }
+        }
+
+        return null;
+
     }
 
     //true if car has entered intersection
@@ -2695,11 +2756,14 @@ public class GUIMain{
 
         private Timeline timeline;
 
+        private final Bearing bearing;
+
         public PedestrianVisual(ImageView imageView, ArrayList<Image> walkingFrames, double speed, boolean firstCrosswalk, Bearing bearing) {
             this.imageView = imageView;
             this.walkingFrames = walkingFrames;
             this.speed = speed;
             this.firstCrosswalk = firstCrosswalk;
+            this.bearing = bearing;
         }
 
         public ImageView getImageView() {
@@ -2708,6 +2772,10 @@ public class GUIMain{
 
         public double getSpeed() {
             return speed;
+        }
+
+        public Bearing getBearing() {
+            return bearing;
         }
 
         public boolean isFirstCrosswalk() {

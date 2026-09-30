@@ -5,27 +5,29 @@ import Simulator.Bearing;
 public class EMSVehicle {
     private boolean NSActive;
     private boolean EWActive;
-    private Mux mux;
+    private final Mux mux;
 
 
     public EMSVehicle(Mux mux) {
         this.mux = mux;
+        NSActive = false;
+        EWActive = false;
     }
 
     public void incomingEMSVehicle(Bearing EMSBearing) {
-        if(EMSBearing.equals(Bearing.North) ||  EMSBearing.equals(Bearing.South)) {
+        if(EMSBearing == Bearing.North ||  EMSBearing == Bearing.South) {
             NSActive = true;
         }
-        if(EMSBearing.equals(Bearing.East) ||  EMSBearing.equals(Bearing.West)) {
+        if(EMSBearing == Bearing.East ||  EMSBearing == Bearing.West) {
             EWActive = true;
         }
     }
 
     public void leavingEMSVehicle(Bearing EMSBearing) {
-        if(EMSBearing.equals(Bearing.North) ||   EMSBearing.equals(Bearing.South)) {
+        if(EMSBearing == Bearing.North ||   EMSBearing == Bearing.South) {
             NSActive = false;
         }
-        if(EMSBearing.equals(Bearing.East) ||  EMSBearing.equals(Bearing.West)) {
+        if(EMSBearing == Bearing.East ||  EMSBearing == Bearing.West) {
             EWActive = false;
         }
     }
@@ -38,5 +40,13 @@ public class EMSVehicle {
     public boolean isEWActive() {
         return EWActive;
     }
-
+    public Bearing getActiveBearing() {
+        if (NSActive) {
+            return Bearing.North;
+        }
+        if (EWActive) {
+            return Bearing.East;
+        }
+        return null;
+    }
 }

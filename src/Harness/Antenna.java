@@ -3,17 +3,25 @@ package Harness;
 import Simulator.Bearing;
 
 public class Antenna {
-    private Mux mux;
+    private final Mux mux;
+    private Bearing activeBearing;
+
     public Antenna(Mux mux) {
         this.mux = mux;
+        this.activeBearing = null;
     }
     public void emsRequest(Bearing bearing) {
-        // process ems request and notify other interfaces
+        activeBearing = bearing;
     }
     public void emsCleared(Bearing bearing) {
-        // process ems clearing intersection
+        if (activeBearing == bearing) {
+            activeBearing = null;
+        }
     }
     public void resetRequest() {
-        // clear currently active request
+        activeBearing = null;
+    }
+    public Bearing getActiveBearing() {
+        return activeBearing;
     }
 }

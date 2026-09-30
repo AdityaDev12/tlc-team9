@@ -24,14 +24,17 @@ public class NightMode {
         trafficLights.setLightPattern(LightPattern.NS_GREEN);
 
         //Wait until an EW sensor is activated
-        boolean base = true;
-        while (base) {
-            if (trafficSensorEW.isActive()) {
-                base = false;
-            }
+//        boolean base = true;
+//        while (base) {
+//            if (trafficSensorEW.isActive()) {
+//                base = false;
+//            }
+//            timer.wait(100);
+//        }
+//        base = false;
+        while(!trafficSensorEW.isActive()) {
             timer.wait(100);
         }
-        base = false;
 
         trafficLights.setLightPattern(LightPattern.NS_YELLOW);
         timer.wait(5000);

@@ -4,7 +4,7 @@ import Communication.PedestrianSignalState;
 
 public class Pedestrian {
     private PedestrianSignalState state;
-    private Mux mux;
+    private final Mux mux;
 
     public Pedestrian(Mux mux) {
         this.mux = mux;

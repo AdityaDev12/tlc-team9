@@ -1390,7 +1390,7 @@ public class GUIMain{
 
         //send ems event to harness
         if(EMS) {
-            SimulatorEvent event = SimulatorEvent.emsPriority(bearing.name(), EMSPriorityState.REQUEST);
+            SimulatorEvent event = SimulatorEvent.emsPriority(bearing, EMSPriorityState.REQUEST);
 
             server.sendEvent(event);
         }

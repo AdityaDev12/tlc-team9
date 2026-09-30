@@ -13,9 +13,9 @@ public class Mux {
     private static final String HOST = "localhost";
     private static final int PORT = 5001;
 
-    private Socket socket;
-    private PrintWriter output;
-    private BufferedReader input;
+    private final Socket socket;
+    private final PrintWriter output;
+    private final BufferedReader input;
 
     // Connects to Simulator
     public Mux() throws IOException {

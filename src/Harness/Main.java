@@ -1,15 +1,16 @@
 package Harness;
-import Communication.InstructionMessage;
 import Communication.SimulatorEvent;
-import Communication.TLCCommand;
 import Simulator.*;
 
 import java.io.IOException;
-import java.util.Scanner;
 import java.util.Timer;
 
 /**
- * Temporary test, creates mux
+ * Constructs the TLC,
+ * connects to Mux,
+ * receives Simulator events,
+ * translates events into calls on TLC interface objects,
+ * passes requests to ModeControl
  */
 
 public class Main {
@@ -22,7 +23,7 @@ public class Main {
             final Mux connectedMux = mux; // final reference for event-receiver
 
             // creates TLC interface objects
-            TrafficSensor trafficSensor = new TrafficSensor(connectedMux, Bearing.West);//temp bearing for testing
+            TrafficSensor trafficSensorEW = new TrafficSensor(connectedMux, Bearing.East);//temp bearing for testing
             TrafficLights trafficLights = new TrafficLights(connectedMux);
             Antenna antenna = new Antenna(connectedMux);
             Pedestrian pedestrian = new Pedestrian(connectedMux);
@@ -35,7 +36,7 @@ public class Main {
                     trafficLights, timer, emsVehicle
             );
             NightMode nightMode = new NightMode(
-                    trafficSensor, trafficLights, timer, emsVehicle
+                    trafficSensorEW, trafficLights, timer, emsVehicle
             );
             EMSMode emsMode = new EMSMode(
                     antenna, trafficLights, timer
@@ -51,45 +52,43 @@ public class Main {
 
             System.out.println("Traffic Light Controller initialized.");
 
-            /**
-             * Need:
-             * [IN REVISION] receive events from Sim through Mux,
-             * [ONGOING] send events to correct interface object
-             * [ONGOING] notify ModeControl of ped/emsRequest
-             * enable ModeControl selection of mode
-             * execute selected mode
-             */
+            // starts TLC Mode Control thread
+            Thread modeController = new Thread(modeControl::run, "TLC-ModeControl");
+            modeController.start();
 
-            // listens for events from Simulator
+            // receives events from Simulator
             Thread eventReceiver = new Thread(() -> {
                 try {
-                    while (true) {
+                    while (!Thread.currentThread().isInterrupted()) {
                         SimulatorEvent event = connectedMux.receiveEvent();
                         if (event == null) {
                             System.out.println("Simulator connection closed.");
                             break;
                         }
                         handleSimulatorEvent(
-                                event, trafficSensor, pedestrian, emsVehicle, modeControl
+                                event, trafficSensorEW, pedestrian, emsVehicle, antenna, modeControl
                         );
                     }
                 } catch (IOException e) {
-                    System.err.println("ERROR: HarnessMain lost connection to Simulator");
-                    e.printStackTrace();;
+                    System.err.println("ERROR: HMain TLC lost connection to Simulator");
+                    e.printStackTrace();
+                } finally {
+                    modeController.interrupt();
                 }
-            }, "SimulatorEventReceiver");
-        eventReceiver.setDaemon(true);
+            }, "TLC-SimulatorEventReceiver");
         eventReceiver.start();
+        eventReceiver.join(); // keep Main alive while TLC runs
         } catch (IOException e) {
-            System.err.println("ERROR: HarnessMain unable to connect TLC to Simulator");
+            System.err.println("ERROR: HMain unable to connect TLC to Simulator");
             e.printStackTrace();
-
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         } finally {
             if (mux != null) {
                 try {
                     mux.close();
                 } catch (IOException e) {
-                    System.err.println("ERROR: Unable to close Mux connection.");
+                    System.err.println("ERROR: HMain unable to close Mux connection.");
                 }
             }
         }
@@ -100,10 +99,11 @@ public class Main {
             TrafficSensor trafficSensor,
             Pedestrian pedestrian,
             EMSVehicle emsVehicle,
+            Antenna antenna,
             ModeControl modeControl) {
         switch (event.getCommand()) {
             case VEHICLE_DETECTED:
-                System.out.println("HMain: Vehicle detected: " + event.getTarget());
+                System.out.println("Main: Vehicle detected: " + event.getTarget());
                 /**
                  * temporary; for one trafficsensor object configured for bearing.West
                  * need to map lane IDs to individual sensors for updates
@@ -111,40 +111,44 @@ public class Main {
                 trafficSensor.vehicleDetected();
                 break;
 
+            case VEHICLE_CLEARED:
+                System.out.println("Main: Vehicle cleared: " + event.getTarget());
+                trafficSensor.vehicleGone();
+                break;
+
             case PEDESTRIAN_BUTTON_PRESSED:
-                System.out.println("HMain: Pedestrian button pressed: " + event.getTarget());
+                System.out.println("Main: Pedestrian button pressed: " + event.getTarget());
                 pedestrian.pedRequest();
                 modeControl.setPedRequest(true);
                 break;
 
             case EMS_PRIORITY_REQUEST:
                 Bearing requestBearing = event.getBearing();
-                System.out.println("HMain: EMS priority requested: " + event.getTarget());
+                System.out.println("Main: EMS priority requested: " + requestBearing);
                 emsVehicle.incomingEMSVehicle(requestBearing);
-                modeControl.setEmsRequest(true);
+                antenna.emsRequest(requestBearing);
+                modeControl.setEmsRequest(true, requestBearing);
                 break;
 
             case EMS_PRIORITY_CANCEL:
                 Bearing cancelBearing = event.getBearing();
-                System.out.println("HMain: EMS priority cleared: " + event.getTarget());
-                emsVehicle.incomingEMSVehicle(cancelBearing);
-                modeControl.setEmsRequest(false);
+                System.out.println("Main: EMS priority cleared: " + cancelBearing);
+                emsVehicle.leavingEMSVehicle(cancelBearing);
+                antenna.emsCleared(cancelBearing);
+                modeControl.setEmsRequest(emsVehicle.isEMSActive(), emsVehicle.getActiveBearing());
                 break;
 
             case UPDATE_PEDESTRIAN_SIGNAL:
-                System.out.println("HMain: Pedestrian signal update: " + event.getTarget() + " = " + event.getValue());
+                System.out.println("Main: Pedestrian signal update: " + event.getTarget() + " = " + event.getValue());
                 break;
 
             case RESUME_NORMAL:
-                System.out.println("HMain: Simulator requested normal operation.");
+                System.out.println("Main: Simulator requested normal operation.");
+                modeControl.setEmsRequest(false, null);
                 break;
 
             case SET_LIGHT_STATE:
-                /**
-                 * SET_LIGHT_STATE is TLC -> Sim instruction
-                 * now sent back as an event
-                 */
-                System.out.println("HMain: Received unexpected SET_LIGHT_STATE event");
+                System.out.println("Main: Received unexpected SET_LIGHT_STATE event");
                 break;
         }
     }

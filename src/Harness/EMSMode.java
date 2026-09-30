@@ -2,19 +2,17 @@ package Harness;
 
 import Simulator.Bearing;
 
-import java.util.Timer;
-
 public class EMSMode {
     private final Antenna antenna;
     private final TrafficLights trafficLights;
-    private final Timer timer;
+    private final TLCTimer timer;
     // direction of active emsRequest
     private Bearing activeBearing;
 
     public EMSMode(
             Antenna antenna,
             TrafficLights trafficLights,
-            Timer timer) {
+            TLCTimer timer) {
         this.antenna = antenna;
         this.trafficLights = trafficLights;
         this.timer = timer;

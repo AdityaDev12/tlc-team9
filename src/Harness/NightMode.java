@@ -1,17 +1,15 @@
 package Harness;
 
-import java.util.Timer;
-
 public class NightMode {
     private TrafficLights trafficLights;
     private TrafficSensor trafficSensorEW;
-    private Timer timer;
+    private TLCTimer timer;
     private EMSVehicle emsVehicle;
 
     public NightMode(
             TrafficSensor trafficSensorEW,
             TrafficLights trafficLights,
-            Timer timer, EMSVehicle emsVehicle) {
+            TLCTimer timer, EMSVehicle emsVehicle) {
         this.trafficLights = trafficLights;
         this.trafficSensorEW = trafficSensorEW;
         this.timer = timer;
@@ -23,24 +21,15 @@ public class NightMode {
 
         trafficLights.setLightPattern(LightPattern.NS_GREEN);
 
-        //Wait until an EW sensor is activated
-//        boolean base = true;
-//        while (base) {
-//            if (trafficSensorEW.isActive()) {
-//                base = false;
-//            }
-//            timer.wait(100);
-//        }
-//        base = false;
         while(!trafficSensorEW.isActive()) {
-            timer.wait(100);
+            timer.waitFor(100);
         }
 
         trafficLights.setLightPattern(LightPattern.NS_YELLOW);
-        timer.wait(5000);
+        timer.waitFor(5000);
 
         trafficLights.setLightPattern(LightPattern.ALL_RED);
-        timer.wait(2000);
+        timer.waitFor(2000);
 
         if (emsVehicle.isEMSActive()){
             //RETURN TO POWER ON
@@ -48,13 +37,13 @@ public class NightMode {
 
         //EW Green
         trafficLights.setLightPattern(LightPattern.EW_GREEN);
-        timer.wait(20000);
+        timer.waitFor(20000);
 
         trafficLights.setLightPattern(LightPattern.EW_YELLOW);
-        timer.wait(5000);
+        timer.waitFor(5000);
 
         trafficLights.setLightPattern(LightPattern.ALL_RED);
-        timer.wait(2000);
+        timer.waitFor(2000);
 
         //Reset method (if necessary)
     }

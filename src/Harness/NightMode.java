@@ -17,34 +17,42 @@ public class NightMode {
     }
 
     public void run() throws InterruptedException {
-        //NS Green
-
+        // NS has priority
         trafficLights.setLightPattern(LightPattern.NS_GREEN);
 
-        while(!trafficSensorEW.isActive()) {
-            timer.waitFor(100);
+        timer.waitFor(20000); // minimum green always given to NS
+
+        // check if EW is waiting
+        if (trafficSensorEW.isActive()) {
+            // NS Yellow
+            trafficLights.setLightPattern(LightPattern.NS_YELLOW);
+            timer.waitFor(5000);
+            // All Red
+            trafficLights.setLightPattern(LightPattern.ALL_RED);
+            timer.waitFor(2000);
+
+            // EW Green traffic turn
+            trafficLights.setLightPattern(LightPattern.EW_ARROW_GREEN);
+            timer.waitFor(5000);
+
+            trafficLights.setLightPattern(LightPattern.EW_ARROW_YELLOW);
+            timer.waitFor(5000);
+
+            trafficLights.setLightPattern(LightPattern.EW_GREEN);
+            timer.waitFor(10000);
+            // EW Yellow
+            trafficLights.setLightPattern(LightPattern.EW_YELLOW);
+            timer.waitFor(5000);
+            // All Red
+            trafficLights.setLightPattern(LightPattern.ALL_RED);
+            timer.waitFor(2000);
+
+            // Protected left turns for NS
+            trafficLights.setLightPattern(LightPattern.NS_ARROW_GREEN);
+            timer.waitFor(10000);
+
+            trafficLights.setLightPattern(LightPattern.NS_ARROW_YELLOW);
+            timer.waitFor(5000);
         }
-
-        trafficLights.setLightPattern(LightPattern.NS_YELLOW);
-        timer.waitFor(5000);
-
-        trafficLights.setLightPattern(LightPattern.ALL_RED);
-        timer.waitFor(2000);
-
-        if (emsVehicle.isEMSActive()){
-            //RETURN TO POWER ON
-        }
-
-        //EW Green
-        trafficLights.setLightPattern(LightPattern.EW_GREEN);
-        timer.waitFor(20000);
-
-        trafficLights.setLightPattern(LightPattern.EW_YELLOW);
-        timer.waitFor(5000);
-
-        trafficLights.setLightPattern(LightPattern.ALL_RED);
-        timer.waitFor(2000);
-
-        //Reset method (if necessary)
     }
 }

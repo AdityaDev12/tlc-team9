@@ -1445,6 +1445,12 @@ public class GUIMain{
         streetPane.getChildren().remove(carVisual.getImageView());
         cars.remove(carVisual);
 
+        //tell harness the EMS vehicle has passed
+        if (carVisual.getCar().isEMS() && server != null) {
+            SimulatorEvent event = SimulatorEvent.emsPriority(carVisual.getCar().getBearing(), EMSPriorityState.CANCEL);
+            server.sendEvent(event);
+        }
+
         checkEMS();
     }
 

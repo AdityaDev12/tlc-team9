@@ -1,6 +1,7 @@
 package Simulator;
 
 import Communication.InstructionMessage;
+import Communication.PedestrianSignalState;
 import Communication.SimulatorEvent;
 import Communication.TLCCommand;
 import javafx.application.Platform;
@@ -71,11 +72,18 @@ public class SimulatorServer {
     // Handles instruction from Harness
     private void handleInstruction(InstructionMessage message) {
         System.out.println("Handling instruction: " + message.toWireFormat());
-        // SET_LIGHT_STATE
+
+        // TrafficLight instruction
         if (message.getCommand() == TLCCommand.SET_LIGHT_STATE) {
             Bearing guiBearing = Bearing.valueOf(message.getDirection().name());
             Platform.runLater(() -> {
                 gui.changeTrafficLight(message.getLightID(), message.getColor(), message.getShape(), guiBearing);
+            });
+        }
+        // Pedestrian Signal instruction
+        if (message.getCommand() == TLCCommand.SET_PEDESTRIAN_SIGNAL) {
+            PedestrianSignalState state = PedestrianSignalState.valueOf(message.getValue());
+            Platform.runLater(() -> {gui.setPedestrianState(state);
             });
         }
     }

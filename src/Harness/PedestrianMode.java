@@ -20,15 +20,17 @@ public class PedestrianMode {
 
     public void handlePedRequest() {
         if(pedestrian.getState() == PedestrianSignalState.WAIT) {
+            System.out.println("PedestrianMode: Starting ped crossing.");
             //walk
             pedestrian.pedWalk();
-
+            System.out.println("PedestrianMode: Starting signal set to WALK.");
             timer.schedule(this::timeout, duration);
         }
     }
 
     public void timeout() {
         if(pedestrian.getState() == PedestrianSignalState.WALK) {
+            System.out.println("PedestrianMode: Ped crossing finished.");
             //stop
             pedestrian.pedStop();
         }

@@ -1,6 +1,8 @@
 package Harness;
 
+import Communication.InstructionMessage;
 import Communication.PedestrianSignalState;
+import Communication.TLCCommand;
 
 public class Pedestrian {
     private PedestrianSignalState state;
@@ -20,9 +22,13 @@ public class Pedestrian {
 
     public void pedWalk() {
         state = PedestrianSignalState.WALK;
+        InstructionMessage message = new InstructionMessage(TLCCommand.SET_PEDESTRIAN_SIGNAL, "ALL", PedestrianSignalState.WALK.name());
+        mux.sendInstruction(message);
     }
 
     public void pedStop() {
         state = PedestrianSignalState.WAIT;
+        InstructionMessage message = new InstructionMessage(TLCCommand.SET_PEDESTRIAN_SIGNAL,"ALL", PedestrianSignalState.WAIT.name());
+        mux.sendInstruction(message);
     }
 }

@@ -1783,8 +1783,33 @@ public class GUIMain{
                 carVisual.setSpeed(0);
                 otherCar.setSpeed(0);
 
-                carVisual.getTimeline().stop();
-                otherCar.getTimeline().stop();
+                if(carVisual.getTimeline() != null) {
+                    carVisual.getTimeline().stop();
+                }
+
+                if(otherCar.getTimeline() != null) {
+                    otherCar.getTimeline().stop();
+                }
+
+                //when a collision happens, wait 3 seconds and remove them
+                //to not block traffic
+                PauseTransition collisionTimer = new PauseTransition(Duration.seconds(3));
+
+                collisionTimer.setOnFinished(e -> {
+
+                    //make sure they haven't already been removed
+                    if (cars.contains(carVisual)) {
+                        removeCar(carVisual);
+                    }
+
+                    if (cars.contains(otherCar)) {
+                        removeCar(otherCar);
+                    }
+
+                });
+
+                collisionTimer.play();
+
             }
 
             if(isOutsideScreen(car, carVisual.getCurrentBearing())) {

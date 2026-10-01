@@ -4,44 +4,62 @@ public class NightMode {
     private TrafficLights trafficLights;
     private TrafficSensor trafficSensorEW;
     private TLCTimer timer;
+    private volatile boolean emsRequested;
     private EMSVehicle emsVehicle;
 
     public NightMode(
             TrafficSensor trafficSensorEW,
             TrafficLights trafficLights,
             TLCTimer timer, EMSVehicle emsVehicle) {
-        this.trafficLights = trafficLights;
         this.trafficSensorEW = trafficSensorEW;
+        this.trafficLights = trafficLights;
         this.timer = timer;
+        this.emsRequested = false;
         this.emsVehicle = emsVehicle;
     }
 
-    public void run() throws InterruptedException {
+    public void setEmsRequested(boolean requested) {
+        emsRequested = requested;
+    }
+
+    public boolean run() throws InterruptedException {
         // NS has priority
         trafficLights.setLightPattern(LightPattern.NS_GREEN);
-
-        timer.waitFor(20000); // minimum green always given to NS
+        // minimum green always given to NS
+        if (!timer.waitFor(20000, () -> emsRequested)) {
+            return false;
+        }
 
         // check if EW is waiting
         if (trafficSensorEW.isActive()) {
             // NS Yellow
             trafficLights.setLightPattern(LightPattern.NS_YELLOW);
-            timer.waitFor(5000);
+            if (!timer.waitFor(5000, () -> emsRequested)) {
+                return false;
+            }
             // All Red
             trafficLights.setLightPattern(LightPattern.ALL_RED);
-            timer.waitFor(2000);
+            if (!timer.waitFor(2000, () -> emsRequested)) {
+                return false;
+            }
 
             // EW Green traffic turn
-
             trafficLights.setLightPattern(LightPattern.EW_GREEN);
-            timer.waitFor(10000);
+            if (!timer.waitFor(10000, () -> emsRequested)) {
+                return false;
+            }
+
             // EW Yellow
             trafficLights.setLightPattern(LightPattern.EW_YELLOW);
-            timer.waitFor(5000);
+            if (!timer.waitFor(5000, () -> emsRequested)) {
+                return false;
+            }
             // All Red
             trafficLights.setLightPattern(LightPattern.ALL_RED);
-            timer.waitFor(2000);
-
+            if (!timer.waitFor(2000, () -> emsRequested)) {
+                return false;
+            }
         }
+        return true;
     }
 }

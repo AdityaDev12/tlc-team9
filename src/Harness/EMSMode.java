@@ -14,7 +14,7 @@ public class EMSMode {
     private final TrafficLights trafficLights;
     private final TLCTimer timer;
 
-    // direction of the EMS request waiting to be served, null if none
+    // direction of the EMS request currently being served
     private volatile Bearing activeBearing;
 
     private static final long YELLOW_TIME = 5000;   // set(5)
@@ -32,17 +32,6 @@ public class EMSMode {
     // called by ModeControl when an EMS request arrives
     public void request(Bearing bearing) {
         activeBearing = bearing;
-    }
-
-    // true if there is an EMS request waiting to be served
-    public boolean needEMS() {
-        return activeBearing != null;
-    }
-
-    public void clear(Bearing bearing) {
-        if (activeBearing == bearing) {
-            activeBearing = null;
-        }
     }
 
     // runs the EMS state machine once, returns when the EMS vehicle has passed
@@ -92,9 +81,6 @@ public class EMSMode {
 
         activeBearing = null; // request was served
 
-        // activeBearing is not cleared here: ModeControl keeps calling run()
-        // until Main reports every EMS vehicle has left, and Main keeps
-        // activeBearing pointing at the direction that still needs green
         System.out.println("EMSMode: finished, back to normal");
     }
 

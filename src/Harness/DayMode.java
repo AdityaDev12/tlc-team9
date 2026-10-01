@@ -3,6 +3,7 @@ package Harness;
 public class DayMode {
     private TrafficLights trafficLights;
     private TLCTimer timer;
+    private volatile boolean emsRequested;
     private EMSVehicle emsVehicle;
 
 
@@ -12,50 +13,76 @@ public class DayMode {
         this.trafficLights = trafficLights;
         this.timer = timer;
         this.emsVehicle = emsVehicle;
+        this.emsRequested = false;
+    }
+    public void setEmsRequested(boolean requested) {
+        emsRequested = requested;
     }
 
-    public void runNS() throws InterruptedException {
+    public boolean runNS() throws InterruptedException {
         //NS Green
         trafficLights.setLightPattern(LightPattern.NS_ARROW_GREEN);
-        timer.waitFor(15000);
+        if (!timer.waitFor(15000, () -> emsRequested)) {
+            return false;
+        }
 
         trafficLights.setLightPattern(LightPattern.NS_ARROW_YELLOW);
-        timer.waitFor(5000);
+        if (!timer.waitFor(5000, () -> emsRequested)) {
+            return false;
+        }
 
         trafficLights.setLightPattern(LightPattern.NS_GREEN);
-        timer.waitFor(20000);
+        if (!timer.waitFor(20000, () -> emsRequested)) {
+            return false;
+        }
 
         trafficLights.setLightPattern(LightPattern.NS_YELLOW);
-        timer.waitFor(5000);
+        if (!timer.waitFor(5000, () -> emsRequested)) {
+            return false;
+        }
 
         System.out.println("NS: ALL RED");
 
         trafficLights.setLightPattern(LightPattern.ALL_RED);
-        timer.waitFor(2000);
+        if (!timer.waitFor(2000, () -> emsRequested)) {
+            return false;
+        }
         System.out.println("NS: ALL RED finished");
+        return true;
 
     }
 
-    public void runEW() throws InterruptedException {
+    public boolean runEW() throws InterruptedException {
 
         //EW Green
         trafficLights.setLightPattern(LightPattern.EW_ARROW_GREEN);
-        timer.waitFor(15000);
+        if (!timer.waitFor(15000, () -> emsRequested)) {
+            return false;
+        }
 
         trafficLights.setLightPattern(LightPattern.EW_ARROW_YELLOW);
-        timer.waitFor(5000);
+        if (!timer.waitFor(5000, () -> emsRequested)) {
+            return false;
+        }
 
         trafficLights.setLightPattern(LightPattern.EW_GREEN);
-        timer.waitFor(20000);
+        if (!timer.waitFor(20000, () -> emsRequested)) {
+            return false;
+        }
 
         trafficLights.setLightPattern(LightPattern.EW_YELLOW);
-        timer.waitFor(5000);
+        if (!timer.waitFor(5000, () -> emsRequested)) {
+            return false;
+        }
 
         System.out.println("EW: ALL RED");
 
         trafficLights.setLightPattern(LightPattern.ALL_RED);
-        timer.waitFor(2000);
+        if (!timer.waitFor(2000, () -> emsRequested)) {
+            return false;
+        }
 
         System.out.println("EW: ALL RED finished");
+        return true;
     }
 }

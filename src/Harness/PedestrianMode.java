@@ -20,6 +20,23 @@ public class PedestrianMode {
 
     public void handlePedRequest() throws InterruptedException{
         if(pedestrian.getState() == PedestrianSignalState.WAIT) {
+            LightPattern current = trafficLights.getCurrentPattern();
+
+            //turn whichever direction is currently active to yellow
+            if(current == LightPattern.NS_GREEN || current == LightPattern.NS_ARROW_GREEN) {
+                trafficLights.setLightPattern(LightPattern.NS_YELLOW);
+            }
+
+            else if (current == LightPattern.EW_GREEN || current == LightPattern.EW_ARROW_GREEN) {
+                trafficLights.setLightPattern(LightPattern.EW_YELLOW);
+            }
+
+            //time for yellow
+            timer.waitFor(5000);
+
+            //all red
+            trafficLights.setLightPattern(LightPattern.ALL_RED);
+
             System.out.println("PedestrianMode: Starting ped crossing.");
             //walk
             pedestrian.pedWalk();

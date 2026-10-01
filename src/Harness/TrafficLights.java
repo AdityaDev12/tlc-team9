@@ -11,8 +11,11 @@ public class TrafficLights {
     public TrafficLights(Mux mux) {
         this.mux = mux;
     }
+    private LightPattern currentPattern;
 
     public void setLightPattern(LightPattern pattern) {
+        currentPattern = pattern;
+
         switch (pattern) {
             case ALL_RED:
                 setAllRed(Position.North);
@@ -144,5 +147,9 @@ public class TrafficLights {
             default:
                 throw new IllegalArgumentException("TrafficLights: Unknown direction: " + direction);
         }
+    }
+
+    public LightPattern getCurrentPattern() {
+        return currentPattern;
     }
 }

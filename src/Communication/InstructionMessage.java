@@ -11,9 +11,9 @@ import Simulator.LightShape;
  */
 public class InstructionMessage {
 
-    private static String DELIMITER = ":";
+    private static final String DELIMITER = ":";
 
-    private TLCCommand command;
+    private final TLCCommand command;
     // traffic light fields
     private int lightID;
     private LightCol color;
@@ -54,9 +54,6 @@ public class InstructionMessage {
     }
     public Position getDirection() {
         return position;
-    }
-    public String getTarget() {
-        return target;
     }
     public String getValue() {
         return value;

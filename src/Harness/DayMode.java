@@ -1,10 +1,10 @@
 package Harness;
 
 public class DayMode {
-    private TrafficLights trafficLights;
-    private TLCTimer timer;
+    private final TrafficLights trafficLights;
+    private final TLCTimer timer;
     private volatile boolean emsRequested;
-    private EMSVehicle emsVehicle;
+    private final EMSVehicle emsVehicle;
 
 
     public DayMode(

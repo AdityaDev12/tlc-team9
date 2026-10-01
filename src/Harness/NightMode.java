@@ -1,11 +1,11 @@
 package Harness;
 
 public class NightMode {
-    private TrafficLights trafficLights;
-    private TrafficSensor trafficSensorEW;
-    private TLCTimer timer;
+    private final TrafficLights trafficLights;
+    private final TrafficSensor trafficSensorEW;
+    private final TLCTimer timer;
     private volatile boolean emsRequested;
-    private EMSVehicle emsVehicle;
+    private final EMSVehicle emsVehicle;
 
     public NightMode(
             TrafficSensor trafficSensorEW,

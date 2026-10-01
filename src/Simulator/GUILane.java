@@ -3,8 +3,8 @@ package Simulator;
 import java.util.ArrayList;
 
 public class GUILane {
-    private LanePosition lanePosition;
-    private Bearing bearing;
+    private final LanePosition lanePosition;
+    private final Bearing bearing;
     private ArrayList<GUILight> myLights = new ArrayList<>();
     private ArrayList<GUISensor> mySensors = new ArrayList<>();
 

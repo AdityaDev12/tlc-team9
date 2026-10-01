@@ -1,8 +1,5 @@
 package Communication;
 
-import Communication.EMSPriorityState;
-import Communication.PedestrianSignalState;
-import Communication.SensorState;
 import Simulator.Bearing;
 
 /**

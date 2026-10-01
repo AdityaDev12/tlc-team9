@@ -308,11 +308,11 @@ public class GUIMain{
         trafficSlider.setMinorTickCount(0);
         trafficSlider.setSnapToTicks(true);
 
-        trafficSlider.valueProperty().addListener((obsVal, oldVal, newValue) -> {
+        trafficSlider.valueProperty().addListener((_, _, newValue) -> {
             setTraffic(newValue.intValue());
         });
 
-        spawnCarButton.setOnAction(event -> {
+        spawnCarButton.setOnAction(_ -> {
             spawnCar(false);
 
             //cool down between spawns
@@ -320,12 +320,12 @@ public class GUIMain{
 
             PauseTransition cooldown = new PauseTransition(Duration.seconds(3));
 
-            cooldown.setOnFinished(nxtEvent -> spawnCarButton.setDisable(false));
+            cooldown.setOnFinished(_ -> spawnCarButton.setDisable(false));
 
             cooldown.play();
         });
 
-        spawnEMSButton.setOnAction(event -> {
+        spawnEMSButton.setOnAction(_ -> {
             spawnCar(true);
             setEMSIndicator(true);
 
@@ -334,12 +334,12 @@ public class GUIMain{
 
             PauseTransition cooldown = new PauseTransition(Duration.seconds(3));
 
-            cooldown.setOnFinished(nxtEvent -> spawnEMSButton.setDisable(false));
+            cooldown.setOnFinished(_ -> spawnEMSButton.setDisable(false));
 
             cooldown.play();
         });
 
-        spawnPedestrianButton.setOnAction(event -> {
+        spawnPedestrianButton.setOnAction(_ -> {
             spawnPedestrian();
 
             //cool down between spawns
@@ -347,12 +347,12 @@ public class GUIMain{
 
             PauseTransition cooldown = new PauseTransition(Duration.seconds(3));
 
-            cooldown.setOnFinished(nxtEvent -> spawnPedestrianButton.setDisable(false));
+            cooldown.setOnFinished(_ -> spawnPedestrianButton.setDisable(false));
 
             cooldown.play();
         });
 
-        clearAll.setOnAction(event -> {
+        clearAll.setOnAction(_ -> {
             for(CarVisual car : new ArrayList<>(cars)) {
                 removeCar(car);
             }
@@ -1044,15 +1044,15 @@ public class GUIMain{
 
         //show start time
         for(PedLightVisual light : pedLights) {
-            light.getTimer().setText(String.valueOf(pedestrianTime));
+            light.timer().setText(String.valueOf(pedestrianTime));
         }
 
-        pedestrianTimer = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
+        pedestrianTimer = new Timeline(new KeyFrame(Duration.seconds(1), _ -> {
             pedestrianTime--;
 
             //set new time
             for(PedLightVisual light : pedLights) {
-                light.getTimer().setText(String.valueOf(pedestrianTime));
+                light.timer().setText(String.valueOf(pedestrianTime));
             }
 
             if(pedestrianTime <= 0) {
@@ -1060,7 +1060,7 @@ public class GUIMain{
 
                 //return to idle
                 for(PedLightVisual light : pedLights) {
-                    light.getTimer().setText("-");
+                    light.timer().setText("-");
                 }
 
                 pedestrianButtonPressed = false;
@@ -1193,36 +1193,36 @@ public class GUIMain{
         TrafficLightVisual light = directionalLights.get(lightID);
 
         //hide every shape
-        if(light.getLight() != null) {
-            light.getLight().setVisible(false);
+        if(light.light() != null) {
+            light.light().setVisible(false);
         }
 
-        if(light.getLeftTurnArrow() != null) {
-            light.getLeftTurnArrow().setVisible(false);
+        if(light.leftTurnArrow() != null) {
+            light.leftTurnArrow().setVisible(false);
         }
 
-        if(light.getRightTurnArrow() != null) {
-            light.getRightTurnArrow().setVisible(false);
+        if(light.rightTurnArrow() != null) {
+            light.rightTurnArrow().setVisible(false);
         }
         System.out.println("Shape received: " + shape);
         //change traffic lights based on shape
         switch (shape) {
             case LeftArrow:
-                if(light.getLeftTurnArrow() != null) {
-                    light.getLeftTurnArrow().setVisible(true);
+                if(light.leftTurnArrow() != null) {
+                    light.leftTurnArrow().setVisible(true);
 
                     switch (color) {
 
                         case Red:
-                            light.getLeftTurnArrow().setFill(Color.RED);
+                            light.leftTurnArrow().setFill(Color.RED);
                             break;
 
                         case Yellow:
-                            light.getLeftTurnArrow().setFill(Color.YELLOW);
+                            light.leftTurnArrow().setFill(Color.YELLOW);
                             break;
 
                         case Green:
-                            light.getLeftTurnArrow().setFill(Color.GREEN);
+                            light.leftTurnArrow().setFill(Color.GREEN);
                             break;
                     }
                 }
@@ -1230,21 +1230,21 @@ public class GUIMain{
                 break;
 
             case RightArrow:
-                if(light.getRightTurnArrow() != null) {
-                    light.getRightTurnArrow().setVisible(true);
+                if(light.rightTurnArrow() != null) {
+                    light.rightTurnArrow().setVisible(true);
 
                     switch (color) {
 
                         case Red:
-                            light.getRightTurnArrow().setFill(Color.RED);
+                            light.rightTurnArrow().setFill(Color.RED);
                             break;
 
                         case Yellow:
-                            light.getRightTurnArrow().setFill(Color.YELLOW);
+                            light.rightTurnArrow().setFill(Color.YELLOW);
                             break;
 
                         case Green:
-                            light.getRightTurnArrow().setFill(Color.GREEN);
+                            light.rightTurnArrow().setFill(Color.GREEN);
                             break;
                     }
                 }
@@ -1252,19 +1252,19 @@ public class GUIMain{
                 break;
 
             case Square:
-                if(light.getLight() != null) {
-                    light.getLight().setVisible(true);
+                if(light.light() != null) {
+                    light.light().setVisible(true);
                     switch(color) {
                         case Red:
-                            light.getLight().setFill(Color.RED);
+                            light.light().setFill(Color.RED);
                             break;
 
                         case Yellow:
-                            light.getLight().setFill(Color.YELLOW);
+                            light.light().setFill(Color.YELLOW);
                             break;
 
                         case Green:
-                            light.getLight().setFill(Color.GREEN);
+                            light.light().setFill(Color.GREEN);
                             break;
                     }
                 }
@@ -1317,8 +1317,6 @@ public class GUIMain{
         }
 
 
-        //store logic state
-        light.setCurrentColor(color);
     }
 
     private void createCar(int id, GUILane lane, Bearing bearing, LanePosition lanePosition, boolean EMS) {
@@ -1354,8 +1352,7 @@ public class GUIMain{
 
         if (lanePosition != LanePosition.Middle) {
             Bearing pendingBearing = computeTurnBearing(bearing, lanePosition);
-            double mergeThreshold = getMergeCoordinate(pendingBearing, lanePosition);
-            carVisual.setTurnInfo(pendingBearing, mergeThreshold);
+            carVisual.setTurnInfo(pendingBearing);
         }
 
         //store car
@@ -1402,7 +1399,6 @@ public class GUIMain{
                         pedestrian,
                         walkingFrames,
                         speed,
-                        firstCrosswalk,
                         bearing
         );
 
@@ -1521,23 +1517,6 @@ public class GUIMain{
         };
     }
 
-    // returns the fixed lane coordinate a turning car merges into on its new road
-    // (always the "straight" lane, lane index 1, of the destination approach)
-    private double getMergeCoordinate(Bearing bearing, LanePosition lanePosition) {
-        double roadLeft = (WINDOW_WIDTH - ROAD_WIDTH) / 2;
-        double roadTop = (WINDOW_HEIGHT - ROAD_WIDTH) / 2;
-
-        int laneNumber = lanePosition.ordinal();
-        int physicalLane = LANES_PER_DIRECTION - 1 - laneNumber;
-
-        return switch (bearing) {
-            case North -> roadLeft + (LANES_PER_DIRECTION + physicalLane) * LANE_WIDTH;
-            case South -> roadLeft + (LANES_PER_DIRECTION - 1 - physicalLane) * LANE_WIDTH;
-            case East  -> roadTop + (LANES_PER_DIRECTION + physicalLane) * LANE_WIDTH;
-            case West  -> roadTop + (LANES_PER_DIRECTION - 1 - physicalLane) * LANE_WIDTH;
-        };
-    }
-
     private void positionPed(ImageView pedestrian, Bearing bearing, boolean firstCrosswalk) {
         double intersectionLeft = (WINDOW_WIDTH - ROAD_WIDTH) / 2.0;
         double intersectionRight = intersectionLeft + ROAD_WIDTH;
@@ -1647,7 +1626,7 @@ public class GUIMain{
 
         ImageView car = carVisual.imageView;
 
-        Timeline timeline = new Timeline(new KeyFrame(Duration.millis(16), event -> {
+        Timeline timeline = new Timeline(new KeyFrame(Duration.millis(16), _ -> {
             Bearing bearing = carVisual.getCurrentBearing();
 
             //check if this car has reached its turn line (only for left/right lanes)
@@ -1795,7 +1774,7 @@ public class GUIMain{
                 //to not block traffic
                 PauseTransition collisionTimer = new PauseTransition(Duration.seconds(3));
 
-                collisionTimer.setOnFinished(e -> {
+                collisionTimer.setOnFinished(_ -> {
 
                     //make sure they haven't already been removed
                     if (cars.contains(carVisual)) {
@@ -1930,7 +1909,7 @@ public class GUIMain{
        moveAlongCurve(carVisual, start, control, end);
    }
 
-   //moves a car smoothly along a quadratic Bezier curve
+   //moves a car smoothly along a quadratic Bézier curve
    private void moveAlongCurve(CarVisual carVisual, Point2D start, Point2D control, Point2D end) {
 
        ImageView car = carVisual.getImageView();
@@ -1946,7 +1925,7 @@ public class GUIMain{
        final double[] progress = {0.0};
        final Timeline[] turnTimeline = new Timeline[1];
 
-       turnTimeline[0] = new Timeline(new KeyFrame(Duration.millis(16), event -> {
+       turnTimeline[0] = new Timeline(new KeyFrame(Duration.millis(16), _ -> {
 
            //approximate curve length for converting
            //pixels/frame into curve progress
@@ -2041,7 +2020,7 @@ public class GUIMain{
     private void movePedestrian(PedestrianVisual pedestrianVisual, Bearing bearing) {
         ImageView pedestrian = pedestrianVisual.getImageView();
 
-        Timeline timeline = new Timeline(new KeyFrame(Duration.millis(16), event -> {
+        Timeline timeline = new Timeline(new KeyFrame(Duration.millis(16), _ -> {
 
             if(!pedestrianVisual.isCrossing()) {
 
@@ -2143,8 +2122,6 @@ public class GUIMain{
 
         double intersectionRight = intersectionLeft + ROAD_WIDTH;
         double intersectionBottom = intersectionTop + ROAD_WIDTH;
-
-        double crosswalkWidth = CROSSWALK_WIDTH;
 
         return switch (carVisual.getCurrentBearing()) {
             case North -> new BoundingBox(
@@ -2448,7 +2425,7 @@ public class GUIMain{
         //traffic = 10; 750 ms between cars
         double spawnInterval = 3000.0 - (traffic - 1) * 250.0;
 
-        carSpawner = new Timeline(new KeyFrame(Duration.millis(spawnInterval), action -> {
+        carSpawner = new Timeline(new KeyFrame(Duration.millis(spawnInterval), _ -> {
             spawnCar(false);
         }));
 
@@ -2683,56 +2660,12 @@ public class GUIMain{
     }
 
     //small private helper class to store traffic lights
-    private static class TrafficLightVisual {
-        private final Rectangle light;
-        private final Polygon leftTurnArrow;
-        private final Polygon rightTurnArrow;
+        private record TrafficLightVisual(Rectangle light, Polygon leftTurnArrow, Polygon rightTurnArrow) {
 
-        private Shape currentShape;
-        private LightCol currentColor = LightCol.Red;
-
-        public TrafficLightVisual(Rectangle light, Polygon leftTurnArrow, Polygon rightTurnArrow) {
-            this.light = light;
-            this.leftTurnArrow = leftTurnArrow;
-            this.rightTurnArrow = rightTurnArrow;
-        }
-
-        public Polygon getLeftTurnArrow() {
-            return leftTurnArrow;
-        }
-
-        public Polygon getRightTurnArrow() {
-            return rightTurnArrow;
-        }
-
-        public Shape getCurrentShape() {
-            return currentShape;
-        }
-
-        public Rectangle getLight() {
-            return light;
-        }
-
-        public LightCol getCurrentColor() {
-            return currentColor;
-        }
-
-        public void setCurrentColor(LightCol currentColor) {
-            this.currentColor = currentColor;
-        }
     }
 
 
-    private static final class PedLightVisual {
-        private final Text timer;
-
-        private PedLightVisual(Text timer) {
-            this.timer = timer;
-        }
-
-        public Text getTimer() {
-            return timer;
-        }
+    private record PedLightVisual(Text timer) {
     }
 
     //small private helper class to store car visuals
@@ -2750,7 +2683,6 @@ public class GUIMain{
 
         private boolean hasTurned = false;
         private Bearing pendingBearing;
-        private double mergeThreshold;
 
         private Bearing currentBearing;
 
@@ -2858,9 +2790,8 @@ public class GUIMain{
             this.sensorEventSent = sensorEventSent;
         }
 
-        public void setTurnInfo(Bearing pendingBearing, double mergeThreshold) {
+        public void setTurnInfo(Bearing pendingBearing) {
             this.pendingBearing = pendingBearing;
-            this.mergeThreshold = mergeThreshold;
         }
         public boolean isEmsCancelSent() {
             return emsCancelSent;
@@ -2877,7 +2808,6 @@ public class GUIMain{
 
         private final double speed;
 
-        private final boolean firstCrosswalk;
 
         private double distanceSinceLastFrame = 0;
 
@@ -2889,11 +2819,10 @@ public class GUIMain{
 
         private boolean crossing = false;
 
-        public PedestrianVisual(ImageView imageView, ArrayList<Image> walkingFrames, double speed, boolean firstCrosswalk, Bearing bearing) {
+        public PedestrianVisual(ImageView imageView, ArrayList<Image> walkingFrames, double speed, Bearing bearing) {
             this.imageView = imageView;
             this.walkingFrames = walkingFrames;
             this.speed = speed;
-            this.firstCrosswalk = firstCrosswalk;
             this.bearing = bearing;
         }
 
@@ -2907,14 +2836,6 @@ public class GUIMain{
 
         public Bearing getBearing() {
             return bearing;
-        }
-
-        public boolean isFirstCrosswalk() {
-            return firstCrosswalk;
-        }
-
-        public int getCurrentFrame() {
-            return currentFrame;
         }
 
         public boolean isCrossing() {
@@ -2945,10 +2866,6 @@ public class GUIMain{
                 imageView.setImage(walkingFrames.get(currentFrame));
             }
 
-        }
-
-        public Timeline getTimeline() {
-            return timeline;
         }
 
         public void setTimeline(Timeline timeline) {

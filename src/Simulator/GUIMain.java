@@ -955,26 +955,6 @@ public class GUIMain{
         double sensorOffset3 = 280;
 
         for (int lane = 0; lane < LANES_PER_DIRECTION; lane++) {
-
-            //north
-            double northX = intersectionLeft + ROAD_WIDTH / 2
-                    + (LANES_PER_DIRECTION - 1 - lane) * LANE_WIDTH
-                    + LANE_WIDTH / 2.0;
-
-            drawSensor(northX, intersectionRight + ROAD_WIDTH + sensorOffset1, sensorRadius);
-            drawSensor(northX, intersectionRight + ROAD_WIDTH + sensorOffset2, sensorRadius);
-            drawSensor(northX, intersectionRight + ROAD_WIDTH + sensorOffset3, sensorRadius);
-
-
-            //south
-            double southX = intersectionLeft - ROAD_WIDTH / 2
-                    + (LANES_PER_DIRECTION + lane) * LANE_WIDTH
-                    + LANE_WIDTH / 2.0;
-
-            drawSensor(southX, intersectionRight - sensorOffset1, sensorRadius);
-            drawSensor(southX, intersectionRight - sensorOffset2, sensorRadius);
-            drawSensor(southX, intersectionRight - sensorOffset3, sensorRadius);
-
             //east
             double eastY = intersectionRight + ROAD_WIDTH / 2
                     + (LANES_PER_DIRECTION - 1 - lane) * LANE_WIDTH
@@ -1709,6 +1689,11 @@ public class GUIMain{
                 }
             }
 
+            //pedestrian has priority
+            if(IsPedestrianInCrosswalk(carVisual)) {
+                carVisual.setSpeed(0);
+            }
+
             double speed = carVisual.getSpeed(); //pixels per frame
 
             switch(bearing) {
@@ -1731,31 +1716,34 @@ public class GUIMain{
 
             GUICar logicCar = carVisual.getCar();
 
-            //detected
-            if(logicCar.isSensorActive() && !carVisual.isSensorEventSent()) {
-                carVisual.setSensorEventSent(true);
+            //sensors only for east/west
+            if(carVisual.getEntryBearing() == Bearing.East || carVisual.getEntryBearing() == Bearing.West) {
+                //detected
+                if(logicCar.isSensorActive() && !carVisual.isSensorEventSent()) {
+                    carVisual.setSensorEventSent(true);
 
-                if(server != null) {
-                    int laneid = carVisual.getLanePosition().ordinal();
-                    int physicalLane = LANES_PER_DIRECTION - 1 - laneid;
+                    if(server != null) {
+                        int laneid = carVisual.getLanePosition().ordinal();
+                        int physicalLane = LANES_PER_DIRECTION - 1 - laneid;
 
-                    SimulatorEvent e = SimulatorEvent.vehicleSensor(String.valueOf(physicalLane), SensorState.DETECTED);
+                        SimulatorEvent e = SimulatorEvent.vehicleSensor(String.valueOf(physicalLane), SensorState.DETECTED);
 
-                    server.sendEvent(e);
+                        server.sendEvent(e);
+                    }
                 }
-            }
 
-            //cleared
-            if(carVisual.isSensorEventSent() && reachedIntersection(carVisual)) {
-                logicCar.leaveSensor();
-                carVisual.setSensorEventSent(false);
+                //cleared
+                if(carVisual.isSensorEventSent() && reachedIntersection(carVisual)) {
+                    logicCar.leaveSensor();
+                    carVisual.setSensorEventSent(false);
 
-                if(server != null) {
-                    int laneid = carVisual.getLanePosition().ordinal();
-                    int physicalLane = LANES_PER_DIRECTION - 1 - laneid;
+                    if(server != null) {
+                        int laneid = carVisual.getLanePosition().ordinal();
+                        int physicalLane = LANES_PER_DIRECTION - 1 - laneid;
 
-                    SimulatorEvent e = SimulatorEvent.vehicleSensor(String.valueOf(physicalLane), SensorState.CLEARED);
-                    server.sendEvent(e);
+                        SimulatorEvent e = SimulatorEvent.vehicleSensor(String.valueOf(physicalLane), SensorState.CLEARED);
+                        server.sendEvent(e);
+                    }
                 }
             }
 
@@ -2088,6 +2076,62 @@ public class GUIMain{
         pedestrianVisual.setTimeline(timeline);
 
         timeline.play();
+    }
+
+    //detect if a pedestrian is in the crosswalk
+    private boolean IsPedestrianInCrosswalk(CarVisual carVisual) {
+        for(PedestrianVisual pedestrianVisual : pedestrians) {
+            ImageView pedestrian = pedestrianVisual.getImageView();
+
+            //don't check againist pedestrian who isn't crossing
+            if(!pedestrianVisual.isCrossing()) {
+                continue;
+            }
+
+            if(pedestrian.getBoundsInParent().intersects(getCrosswalkBounds(carVisual))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    //get crosswalk bounds
+    private Bounds getCrosswalkBounds(CarVisual carVisual) {
+        double intersectionLeft = (WINDOW_WIDTH - ROAD_WIDTH) / 2;
+        double intersectionTop = (WINDOW_HEIGHT - ROAD_WIDTH) / 2;
+
+        double intersectionRight = intersectionLeft + ROAD_WIDTH;
+        double intersectionBottom = intersectionTop + ROAD_WIDTH;
+
+        double crosswalkWidth = CROSSWALK_WIDTH;
+
+        return switch (carVisual.getCurrentBearing()) {
+            case North -> new BoundingBox(
+                    intersectionLeft,
+                    intersectionTop - CROSSWALK_WIDTH,
+                    ROAD_WIDTH,
+                    CROSSWALK_WIDTH
+            );
+            case South -> new BoundingBox(
+                    intersectionLeft,
+                    intersectionBottom,
+                    ROAD_WIDTH,
+                    CROSSWALK_WIDTH
+            );
+            case East -> new BoundingBox(
+                    intersectionRight,
+                    intersectionTop,
+                    CROSSWALK_WIDTH,
+                    ROAD_WIDTH
+            );
+            case West -> new BoundingBox(
+                    intersectionLeft - CROSSWALK_WIDTH,
+                    intersectionTop,
+                    CROSSWALK_WIDTH,
+                    ROAD_WIDTH
+            );
+        };
     }
 
     private String getCrossingId(Bearing bearing) {

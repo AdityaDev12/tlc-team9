@@ -117,7 +117,6 @@ public class Main {
 
             case PEDESTRIAN_BUTTON_PRESSED:
                 System.out.println("Main: Pedestrian button pressed: " + event.getTarget());
-                pedestrian.pedRequest();
                 modeControl.setPedRequest(true);
                 break;
 

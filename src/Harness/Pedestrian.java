@@ -12,9 +12,6 @@ public class Pedestrian {
         this.mux = mux;
         state = PedestrianSignalState.WAIT;
     }
-    public void pedRequest() {
-        // notify a pedestrian requested to cross
-    }
 
     public PedestrianSignalState getState() {
         return state;

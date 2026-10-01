@@ -48,7 +48,6 @@ public class ModeControl {
         boolean anyEMS = !pendingEMS.isEmpty();
         dayMode.setEmsRequested(anyEMS);
         nightMode.setEmsRequested(anyEMS);
-        pedestrianMode.setEmsRequested(anyEMS);
     }
     public synchronized boolean hasPedRequest() {
         return pedRequest;

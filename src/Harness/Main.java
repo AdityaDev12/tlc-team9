@@ -41,7 +41,7 @@ public class Main {
                     antenna, trafficLights, timer
             );
             PedestrianMode pedestrianMode = new PedestrianMode(
-                    pedestrian, trafficLights, timer
+                    pedestrian, timer
             );
 
             // creates mode control

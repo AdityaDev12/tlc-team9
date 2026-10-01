@@ -1,8 +1,8 @@
 package Simulator;
 
 public class GUICar {
-    private GUILane myLane;
-    private Bearing myBearing;
+    private final GUILane myLane;
+    private final Bearing myBearing;
     private int ID;
     private boolean isAlive = true;
     private LanePosition lanePosition;

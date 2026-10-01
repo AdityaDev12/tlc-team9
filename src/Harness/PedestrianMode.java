@@ -5,7 +5,7 @@ import Communication.PedestrianSignalState;
 public class PedestrianMode {
     private final Pedestrian pedestrian;
     private final long duration = 15_000;
-    private TrafficLights trafficLights;
+    private final TrafficLights trafficLights;
     private final TLCTimer timer;
     private volatile boolean emsRequested;
 

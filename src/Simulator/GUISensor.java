@@ -12,11 +12,4 @@ public class GUISensor {
         this.active = active;
     }
 
-    public boolean getStatus(){
-        return active;
-    }
-
-    public int getID(){
-        return ID;
-    }
 }

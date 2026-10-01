@@ -44,6 +44,9 @@ public class PedestrianMode {
             timer.waitFor(duration);
             pedestrian.pedStop();
             System.out.println("PedestrianMode: Ped crossing finished.");
+
+            //don't turn green right away
+            timer.waitFor(2000);
         }
     }
 

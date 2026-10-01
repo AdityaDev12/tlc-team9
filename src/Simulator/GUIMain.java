@@ -2008,15 +2008,24 @@ public class GUIMain{
 
         Timeline timeline = new Timeline(new KeyFrame(Duration.millis(16), event -> {
 
-            //don't walk
-            if(pedestrianState == PedestrianSignalState.WAIT && reachedPedStop(pedestrianVisual, bearing)) {
+            if(!pedestrianVisual.isCrossing()) {
 
-                if(!pedestrianButtonPressed) {
-                    pedestrianButtonPressed = true;
-                    pedestrianButtonPress(getCrossingId(bearing));
+
+                //don't walk
+                if (pedestrianState == PedestrianSignalState.WAIT && reachedPedStop(pedestrianVisual, bearing)) {
+
+                    if (!pedestrianButtonPressed) {
+                        pedestrianButtonPressed = true;
+                        pedestrianButtonPress(getCrossingId(bearing));
+                    }
+
+                    return;
                 }
 
-                return;
+                if(pedestrianState == PedestrianSignalState.WALK && reachedPedStop(pedestrianVisual, bearing)) {
+                    pedestrianVisual.setCrossing(true);
+                }
+
             }
 
             //don't hit another pedestrian
@@ -2764,6 +2773,8 @@ public class GUIMain{
 
         private final Bearing bearing;
 
+        private boolean crossing = false;
+
         public PedestrianVisual(ImageView imageView, ArrayList<Image> walkingFrames, double speed, boolean firstCrosswalk, Bearing bearing) {
             this.imageView = imageView;
             this.walkingFrames = walkingFrames;
@@ -2790,6 +2801,14 @@ public class GUIMain{
 
         public int getCurrentFrame() {
             return currentFrame;
+        }
+
+        public boolean isCrossing() {
+            return crossing;
+        }
+
+        public void setCrossing(boolean crossing) {
+            this.crossing = crossing;
         }
 
         //next walking frame

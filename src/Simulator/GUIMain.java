@@ -2621,6 +2621,8 @@ public class GUIMain{
 
         Bearing bearing = turningCar.getCurrentBearing();
 
+        int offset = 30;
+
         //only applies to left-turning cars
         if (turningCar.getLanePosition() != LanePosition.Left) {
             return false;
@@ -2655,10 +2657,10 @@ public class GUIMain{
             }
 
             boolean hasPassedCenter = switch (bearing) {
-                case North -> other.getY() > centerY;
-                case South -> other.getY() < centerY;
-                case East -> other.getX() < centerX;
-                case West -> other.getX() > centerX;
+                case North -> other.getY() > centerY + offset;
+                case South -> other.getY() < centerY - offset;
+                case East -> other.getX() < centerX - offset;
+                case West -> other.getX() > centerX + offset;
             };
 
             //oncoming car has not passed the middle yet

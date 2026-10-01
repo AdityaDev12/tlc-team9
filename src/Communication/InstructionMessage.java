@@ -94,8 +94,6 @@ public class InstructionMessage {
         }
         return new InstructionMessage(command, parts[1], parts[2]);
     }
-
-
     @Override
     public String toString() {
         return toWireFormat();

@@ -8,6 +8,7 @@ public class GUICar {
     private LanePosition lanePosition;
     private double distance;
     private GUIIntersection intersection;
+    private boolean emsCleared = false;
 
     private boolean allowedToMove = true;
 
@@ -24,6 +25,7 @@ public class GUICar {
         this.lanePosition = lanePosition;
         this.intersection = intersection;
         this.isEMS = isEMS;
+        this.emsCleared = false;
     }
 
     public boolean canMove() {
@@ -52,6 +54,17 @@ public class GUICar {
 
     public boolean isSensorActive() {
         return sensorActive;
+    }
+
+    public boolean isEms() {
+        return isEMS;
+    }
+
+    public boolean hasEMSCleared() {
+        return emsCleared;
+    }
+    public void setEmsCleared(boolean emsCleared) {
+        this.emsCleared = emsCleared;
     }
 
 

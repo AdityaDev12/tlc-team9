@@ -3,50 +3,34 @@ package Harness;
 import Simulator.Bearing;
 
 public class EMSVehicle {
-    private boolean NSActive;
-    private boolean EWActive;
     private final Mux mux;
+    private Bearing activeBearing;
 
 
     public EMSVehicle(Mux mux) {
         this.mux = mux;
-        NSActive = false;
-        EWActive = false;
+        this.activeBearing = null;
     }
 
-    public void incomingEMSVehicle(Bearing EMSBearing) {
-        if(EMSBearing == Bearing.North ||  EMSBearing == Bearing.South) {
-            NSActive = true;
-        }
-        if(EMSBearing == Bearing.East ||  EMSBearing == Bearing.West) {
-            EWActive = true;
-        }
+    public void incomingEMSVehicle(Bearing bearing) {
+        activeBearing = bearing;
     }
 
-    public void leavingEMSVehicle(Bearing EMSBearing) {
-        if(EMSBearing == Bearing.North ||   EMSBearing == Bearing.South) {
-            NSActive = false;
-        }
-        if(EMSBearing == Bearing.East ||  EMSBearing == Bearing.West) {
-            EWActive = false;
+    public void leavingEMSVehicle(Bearing bearing) {
+        if(activeBearing == bearing) {
+            activeBearing = null;
         }
     }
     public boolean isEMSActive() {
-        return NSActive || EWActive;
+        return activeBearing != null;
     }
     public boolean isNSActive() {
-        return NSActive;
+        return activeBearing == Bearing.North || activeBearing == Bearing.South;
     }
     public boolean isEWActive() {
-        return EWActive;
+        return activeBearing == Bearing.East || activeBearing == Bearing.West;
     }
     public Bearing getActiveBearing() {
-        if (NSActive) {
-            return Bearing.North;
-        }
-        if (EWActive) {
-            return Bearing.East;
-        }
-        return null;
+        return activeBearing;
     }
 }

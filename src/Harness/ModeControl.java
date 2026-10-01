@@ -40,6 +40,9 @@ public class ModeControl {
         emsBearing = bearing;
         if (request && bearing != null) {
             emsMode.request(bearing);
+        } else if (!request && bearing != null) { // clear active bearing
+            emsMode.clear(bearing);
+            emsBearing = null;
         }
     }
     public synchronized boolean hasPedRequest() {
@@ -60,6 +63,10 @@ public class ModeControl {
                 // EMS always has priority
                 if (hasEmsRequest() && getEmsBearing() != null) {
                     emsMode.run();
+                    Bearing servedBearing = getEmsBearing();
+                    if (servedBearing != null && !emsMode.needEMS()) {
+                        setEmsRequest(false, servedBearing);
+                    }
                     continue;
                 }
                 // pedestrian requests have priority over day/night modes

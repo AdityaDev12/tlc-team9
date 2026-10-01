@@ -98,8 +98,6 @@ public class SimulatorEvent {
         return new SimulatorEvent(command, target, value);
     }
 
-
-
     @Override
     public String toString() {
         return toWireFormat();

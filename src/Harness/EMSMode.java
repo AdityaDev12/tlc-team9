@@ -53,14 +53,12 @@ public class EMSMode {
     public void run() throws InterruptedException {
         Bearing bearing = activeBearing;
         if (bearing == null) {
-            bearing = antenna.getActiveBearing();
-        }
-        if (bearing == null) {
-            timer.waitFor(CHECK_TIME); // nothing to do, don't spin
             return;
+            //bearing = antenna.getActiveBearing();
         }
+
         boolean isNS = isNorthSouth(bearing);
-        String axis = isNS ? "NS" : "EW";
+        //String axis = isNS ? "NS" : "EW";
         System.out.println("EMSMode: EMS request from " + bearing);
 
         // stop all traffic first so there are never two greens at once
@@ -73,7 +71,7 @@ public class EMSMode {
         } else {
             trafficLights.setLightPattern(LightPattern.EW_GREEN);
         }
-        System.out.println("EMSMode: " + axis + " green for EMS, waiting for it to pass");
+        System.out.println("EMSMode: " + (isNS ? "NS" : "EW") + " green for EMS, waiting for it to pass");
 
         // hold green for at least MIN_GREEN, and longer while the antenna
         // still has a request on this axis
@@ -82,7 +80,7 @@ public class EMSMode {
             timer.waitFor(CHECK_TIME);
             waited = waited + CHECK_TIME;
         }
-        System.out.println("EMSMode: EMS green done");
+        System.out.println("EMSMode: EMS vehicle has passed.");
 
         // state: EMS Passed -> resetRequest, yellow
         if (isNS) {
@@ -96,6 +94,8 @@ public class EMSMode {
         trafficLights.setLightPattern(LightPattern.ALL_RED);
         timer.waitFor(ALL_RED_TIME);
 
+        activeBearing = null; // request was served
+
         // activeBearing is not cleared here: ModeControl keeps calling run()
         // until Main reports every EMS vehicle has left, and Main keeps
         // activeBearing pointing at the direction that still needs green
@@ -104,8 +104,8 @@ public class EMSMode {
 
     // true if the antenna still has an EMS request on the NS axis (isNS) or EW axis
     private boolean antennaOnAxis(boolean isNS) {
-        Bearing b = antenna.getActiveBearing();
-        return b != null && isNorthSouth(b) == isNS;
+        Bearing bearing = antenna.getActiveBearing();
+        return bearing != null && isNorthSouth(bearing) == isNS;
     }
 
     private boolean isNorthSouth(Bearing bearing) {

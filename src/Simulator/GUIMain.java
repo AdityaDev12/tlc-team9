@@ -1474,7 +1474,7 @@ public class GUIMain{
         //horizontal road
         double roadTop = (WINDOW_HEIGHT - ROAD_WIDTH) / 2;
 
-        //calculate where the car sits on the road based on lane number and bearing
+        //calculate where the car sits on the road-based on lane number and bearing
         switch (bearing) {
 
             case North:
@@ -1764,6 +1764,13 @@ public class GUIMain{
             }
 
             carVisual.getCar().addDistance(speed);
+
+            if(carVisual.getCar().isEms() && !carVisual.isEmsCancelSent() && clearedIntersection(carVisual)) {
+                SimulatorEvent e = SimulatorEvent.emsPriority(carVisual.getEntryBearing(), EMSPriorityState.CANCEL);
+                server.sendEvent(e);
+                carVisual.setEmsCancelSent(true);
+                System.out.println("GUIMain: EMS vehicle cleared intersection: " + carVisual.getEntryBearing());
+            }
 
             CarVisual otherCar = isCollidingWithAnotherCar(carVisual);
 
@@ -2296,6 +2303,20 @@ public class GUIMain{
 
     }
 
+    private boolean clearedIntersection(CarVisual carVisual) {
+        ImageView car = carVisual.getImageView();
+        double intersectionLeft = (WINDOW_WIDTH - ROAD_WIDTH) /2.0;
+        double intersectionRight = intersectionLeft + ROAD_WIDTH;
+        double intersectionTop = (WINDOW_HEIGHT - ROAD_WIDTH) /2.0;
+        double intersectionBottom = intersectionTop + ROAD_WIDTH;
+        return switch (carVisual.getCurrentBearing()) {
+            case North -> car.getY() < intersectionTop;
+            case South -> car.getY() > intersectionBottom;
+            case East -> car.getX() > intersectionRight;
+            case West -> car.getX() < intersectionLeft;
+        };
+    }
+
 
     // Returns true if the car is at the stop line
     private boolean isAtStopLine(CarVisual carVisual) {
@@ -2637,6 +2658,7 @@ public class GUIMain{
         private Timeline timeline;
         private final LanePosition lanePosition;
         private boolean sensorEventSent = false;
+        private boolean emsCancelSent = false;
 
         private final Bearing entryBearing;
 
@@ -2753,6 +2775,12 @@ public class GUIMain{
         public void setTurnInfo(Bearing pendingBearing, double mergeThreshold) {
             this.pendingBearing = pendingBearing;
             this.mergeThreshold = mergeThreshold;
+        }
+        public boolean isEmsCancelSent() {
+            return emsCancelSent;
+        }
+        public void setEmsCancelSent(boolean emsCancelSent) {
+            this.emsCancelSent = emsCancelSent;
         }
     }
 

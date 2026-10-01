@@ -134,7 +134,7 @@ public class Main {
                 System.out.println("Main: EMS priority cleared: " + cancelBearing);
                 emsVehicle.leavingEMSVehicle(cancelBearing);
                 antenna.emsCleared(cancelBearing);
-                modeControl.setEmsRequest(emsVehicle.isEMSActive(), emsVehicle.getActiveBearing());
+                modeControl.setEmsRequest(false, cancelBearing);
                 break;
 
             case UPDATE_PEDESTRIAN_SIGNAL:

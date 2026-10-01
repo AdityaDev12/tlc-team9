@@ -1422,6 +1422,21 @@ public class GUIMain{
             carVisual.getTimeline().stop();
         }
 
+        //clear sensor
+        if(carVisual.isSensorEventSent() && server != null) {
+            int laneid = carVisual.getLanePosition().ordinal();
+            int physicalLane = LANES_PER_DIRECTION - 1 - laneid;
+
+            SimulatorEvent event = SimulatorEvent.vehicleSensor(
+                    String.valueOf(physicalLane),
+                    SensorState.CLEARED
+            );
+
+            server.sendEvent(event);
+
+            carVisual.setSensorEventSent(false);
+        }
+
         streetPane.getChildren().remove(carVisual.getImageView());
         cars.remove(carVisual);
 

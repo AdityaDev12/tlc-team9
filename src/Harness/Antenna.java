@@ -18,9 +18,6 @@ public class Antenna {
             activeBearing = null;
         }
     }
-    public void resetRequest() {
-        activeBearing = null;
-    }
     public Bearing getActiveBearing() {
         return activeBearing;
     }

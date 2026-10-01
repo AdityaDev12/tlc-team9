@@ -49,20 +49,4 @@ public class PedestrianMode {
             timer.waitFor(2000);
         }
     }
-
-    public void timeout() {
-        if(pedestrian.getState() == PedestrianSignalState.WALK) {
-            System.out.println("PedestrianMode: Ped crossing finished.");
-            //stop
-            pedestrian.pedStop();
-        }
-    }
-
-    public void reset() {
-        pedestrian.pedStop();
-    }
-
-    public PedestrianSignalState getState() {
-        return pedestrian.getState();
-    }
 }

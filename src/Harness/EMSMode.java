@@ -45,10 +45,6 @@ public class EMSMode {
         }
     }
 
-    public Bearing getActiveBearing() {
-        return activeBearing;
-    }
-
     // runs the EMS state machine once, returns when the EMS vehicle has passed
     public void run() throws InterruptedException {
         Bearing bearing = activeBearing;

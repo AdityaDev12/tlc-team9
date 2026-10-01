@@ -21,16 +21,4 @@ public class EMSVehicle {
             activeBearing = null;
         }
     }
-    public boolean isEMSActive() {
-        return activeBearing != null;
-    }
-    public boolean isNSActive() {
-        return activeBearing == Bearing.North || activeBearing == Bearing.South;
-    }
-    public boolean isEWActive() {
-        return activeBearing == Bearing.East || activeBearing == Bearing.West;
-    }
-    public Bearing getActiveBearing() {
-        return activeBearing;
-    }
 }

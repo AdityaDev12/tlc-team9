@@ -34,9 +34,6 @@ public class DayMode {
         timer.waitFor(2000);
         System.out.println("NS: ALL RED finished");
 
-        if (emsVehicle.isEMSActive()) {
-            //RETURN TO POWER ON
-        }
     }
 
     public void runEW() throws InterruptedException {
@@ -60,7 +57,5 @@ public class DayMode {
         timer.waitFor(2000);
 
         System.out.println("EW: ALL RED finished");
-
-        //Reset method (if necessary)
     }
 }

@@ -19,6 +19,21 @@ public class DayMode {
         emsRequested = requested;
     }
 
+
+    public void setPedestrianRed() throws InterruptedException {
+
+        LightPattern current = trafficLights.getCurrentPattern();
+
+        if(current == LightPattern.NS_GREEN || current == LightPattern.NS_ARROW_GREEN) {
+            trafficLights.setLightPattern(LightPattern.NS_YELLOW);
+        } else if (current == LightPattern.EW_GREEN || current == LightPattern.EW_ARROW_GREEN) {
+            trafficLights.setLightPattern(LightPattern.EW_YELLOW);
+        }
+
+        timer.waitFor(5000);
+        trafficLights.setLightPattern(LightPattern.ALL_RED);
+    }
+
     public boolean runNS() throws InterruptedException {
         //NS Green
         trafficLights.setLightPattern(LightPattern.NS_ARROW_GREEN);

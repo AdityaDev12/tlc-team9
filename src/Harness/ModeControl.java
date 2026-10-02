@@ -81,6 +81,8 @@ public class ModeControl {
                 }
                 // pedestrian requests have priority over day/night modes
                 if (hasPedRequest()) {
+                    dayMode.setPedestrianRed();
+                    nightMode.setPedestrianRed();
                     boolean completed = pedestrianMode.run();
                     if (completed) {
                         setPedRequest(false);

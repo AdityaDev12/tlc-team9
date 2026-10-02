@@ -1399,6 +1399,7 @@ public class GUIMain{
                         pedestrian,
                         walkingFrames,
                         speed,
+                        firstCrosswalk,
                         bearing
         );
 
@@ -2286,6 +2287,11 @@ public class GUIMain{
                 continue;
             }
 
+            //must be on the same crosswalk
+            if(otherPedestrian.isFirstCrosswalk() != pedestrianVisual.isFirstCrosswalk()) {
+                continue;
+            }
+
             ImageView other = otherPedestrian.getImageView();
 
             Bearing bearing = pedestrianVisual.getBearing();
@@ -2819,10 +2825,13 @@ public class GUIMain{
 
         private boolean crossing = false;
 
-        public PedestrianVisual(ImageView imageView, ArrayList<Image> walkingFrames, double speed, Bearing bearing) {
+        private boolean firstCrosswalk;
+
+        public PedestrianVisual(ImageView imageView, ArrayList<Image> walkingFrames, double speed, boolean firstCrosswalk, Bearing bearing) {
             this.imageView = imageView;
             this.walkingFrames = walkingFrames;
             this.speed = speed;
+            this.firstCrosswalk = firstCrosswalk;
             this.bearing = bearing;
         }
 
@@ -2840,6 +2849,10 @@ public class GUIMain{
 
         public boolean isCrossing() {
             return crossing;
+        }
+
+        public boolean isFirstCrosswalk() {
+            return firstCrosswalk;
         }
 
         public void setCrossing(boolean crossing) {

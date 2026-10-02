@@ -60,16 +60,6 @@ public class NightMode {
                 return false;
             }
         }
-
-        trafficLights.setLightPattern(LightPattern.NS_YELLOW);
-        if (!timer.waitFor(5000, () -> emsRequested)) {
-            return false;
-        }
-        // All Red
-        trafficLights.setLightPattern(LightPattern.ALL_RED);
-        if (!timer.waitFor(2000, () -> emsRequested)) {
-            return false;
-        }
         return true;
     }
 }

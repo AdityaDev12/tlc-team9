@@ -7,7 +7,7 @@ public class Clock {
     private static final LocalTime DAY_END =  LocalTime.of(18,0);
 
     // CHANGE BOOLEAN TO TRUE TO FORCE TIME OF DAY
-    private static final boolean FORCE_NIGHT = true;
+    private static final boolean FORCE_NIGHT = false;
     private static final boolean FORCE_DAY = false;
 
     // true if curr time is between 6AM and 6PM

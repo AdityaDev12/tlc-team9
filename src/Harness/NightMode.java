@@ -5,6 +5,7 @@ public class NightMode {
     private final TrafficSensor trafficSensorEW;
     private final TLCTimer timer;
     private volatile boolean emsRequested;
+    private volatile boolean pedRequested;
     private final EMSVehicle emsVehicle;
 
     public NightMode(
@@ -15,6 +16,7 @@ public class NightMode {
         this.trafficLights = trafficLights;
         this.timer = timer;
         this.emsRequested = false;
+        this.pedRequested = false;
         this.emsVehicle = emsVehicle;
     }
 
@@ -22,18 +24,8 @@ public class NightMode {
         emsRequested = requested;
     }
 
-    public void setPedestrianRed() throws InterruptedException {
-
-        LightPattern current = trafficLights.getCurrentPattern();
-
-        if(current == LightPattern.NS_GREEN || current == LightPattern.NS_ARROW_GREEN) {
-            trafficLights.setLightPattern(LightPattern.NS_YELLOW);
-        } else if (current == LightPattern.EW_GREEN || current == LightPattern.EW_ARROW_GREEN) {
-            trafficLights.setLightPattern(LightPattern.EW_YELLOW);
-        }
-
-        timer.waitFor(5000);
-        trafficLights.setLightPattern(LightPattern.ALL_RED);
+    public void setPedRequested(boolean requested) {
+        pedRequested = requested;
     }
 
     public boolean run() throws InterruptedException {
@@ -42,6 +34,19 @@ public class NightMode {
         // minimum green always given to NS
         if (!timer.waitFor(20000, () -> emsRequested)) {
             return false;
+        }
+
+        //finish phase if ped requested
+        if (pedRequested && !emsRequested) {
+            trafficLights.setLightPattern(LightPattern.NS_YELLOW);
+
+            if (!timer.waitFor(5000, () -> emsRequested)) {
+                trafficLights.setLightPattern(LightPattern.ALL_RED);
+                return true;
+            }
+
+            trafficLights.setLightPattern(LightPattern.ALL_RED);
+            return true;
         }
 
         // check if EW is waiting

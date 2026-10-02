@@ -56,15 +56,6 @@ public class EMSMode {
         System.out.println("EMSMode: EMS request from " + bearing);
 
         // stop all traffic first so there are never two greens at once
-        LightPattern current = trafficLights.getCurrentPattern();
-
-        if(current == LightPattern.NS_GREEN || current == LightPattern.NS_ARROW_GREEN) {
-            trafficLights.setLightPattern(LightPattern.NS_YELLOW);
-        } else if (current == LightPattern.EW_GREEN || current == LightPattern.EW_ARROW_GREEN) {
-            trafficLights.setLightPattern(LightPattern.EW_YELLOW);
-        }
-
-        timer.waitFor(YELLOW_TIME);
         trafficLights.setLightPattern(LightPattern.ALL_RED);
         timer.waitFor(ALL_RED_TIME);
 

@@ -35,6 +35,7 @@ public class ModeControl {
     }
     public synchronized void setPedRequest(boolean request) {
         pedRequest = request;
+        nightMode.setPedRequested(request);
     }
     public synchronized void setEmsRequest(boolean request, Bearing bearing) {
         System.out.println("ModeControl: setEmsRequest(" + request + ", " + bearing + ")");
@@ -84,8 +85,6 @@ public class ModeControl {
                 }
                 // pedestrian requests have priority over day/night modes
                 if (hasPedRequest()) {
-                    dayMode.setPedestrianRed();
-                    nightMode.setPedestrianRed();
                     boolean completed = pedestrianMode.run();
                     if (completed) {
                         setPedRequest(false);

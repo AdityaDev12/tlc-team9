@@ -2,6 +2,8 @@ package Harness;
 
 import Simulator.Bearing;
 import java.util.EnumSet;
+import java.util.LinkedList;
+import java.util.Queue;
 
 public class ModeControl {
     private final DayMode dayMode;
@@ -12,7 +14,8 @@ public class ModeControl {
 
     // conditions
     private boolean pedRequest;
-    private final EnumSet<Bearing> pendingEMS = EnumSet.noneOf(Bearing.class);
+
+    private final Queue<Bearing> pendingEMS = new LinkedList<>();
     private boolean nextNS = true;
 
     public ModeControl(
@@ -58,10 +61,10 @@ public class ModeControl {
     }
 
     public synchronized Bearing getNextEmsBearing() {
-        if (pendingEMS.isEmpty()) {
-            return null;
-        }
-        return pendingEMS.iterator().next();
+
+        return pendingEMS.poll();
+
+
     }
 
     // Main TLC mode selection loop
@@ -70,7 +73,7 @@ public class ModeControl {
             try {
                 // EMS always has priority
                 if (hasEmsRequest()) {
-                    Bearing bearing = getNextEmsBearing();
+                     Bearing bearing = getNextEmsBearing();
                     if (bearing != null) {
                         System.out.println("ModeControl: Starting EMS for: " + bearing);
                         emsMode.request(bearing);
